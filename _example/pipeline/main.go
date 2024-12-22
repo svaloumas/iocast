@@ -25,7 +25,7 @@ type Out struct {
 
 func main() {
 	q := iocast.NewQueue(4, 8)
-	q.StartWithContext(context.Background())
+	q.Start(context.Background())
 	defer q.Stop()
 
 	args := &Args{name: "bob", age: 9}

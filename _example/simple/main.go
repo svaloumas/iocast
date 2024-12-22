@@ -20,7 +20,7 @@ type OtherArgs struct {
 
 func main() {
 	q := iocast.NewQueue(4, 8)
-	q.StartWithContext(context.Background())
+	q.Start(context.Background())
 	defer q.Stop()
 
 	myArgs := &Args{name: "maria", age: 3}

@@ -28,7 +28,7 @@ func (q Queue) Enqueue(j Job) bool {
 	}
 }
 
-func (q Queue) StartWithContext(ctx context.Context) {
+func (q Queue) Start(ctx context.Context) {
 	for i := 0; i < q.workers; i++ {
 		q.wg.Add(1)
 		go func() {
