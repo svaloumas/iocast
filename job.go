@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 )
 
 type Job interface {
@@ -13,32 +14,63 @@ type result[T any] struct {
 	err error
 }
 
-type task[T any] func() result[T]
+type task[Current, Previous any] func(previousResult result[Previous]) result[Current]
 
-type job[T any] struct {
-	task       task[T]
-	resultChan chan result[T]
+type job[Current, Previous any] struct {
+	task       task[Current, Previous]
+	resultChan chan result[Current]
+	next       *job[Current, Previous]
 }
 
-func NewTask[T, R any](ctx context.Context, args T, fn func(ctx context.Context, args T) (R, error)) task[R] {
-	return func() result[R] {
-		out, err := fn(ctx, args)
-		return result[R]{out: out, err: err}
+func NewTask[Arg, Current, Previous any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg, previousResult result[Previous]) (Current, error)) task[Current, Previous] {
+	return func(previous result[Previous]) result[Current] {
+		out, err := fn(ctx, args, previous)
+		return result[Current]{out: out, err: err}
 	}
 }
 
-func NewJob[T any](task task[T]) *job[T] {
-	return &job[T]{
+func NewJob[Current, Previous any](task task[Current, Previous]) *job[Current, Previous] {
+	return &job[Current, Previous]{
 		task:       task,
-		resultChan: make(chan result[T], 1),
+		resultChan: make(chan result[Current], 1),
 	}
 }
 
-func (j *job[T]) Wait() <-chan result[T] {
+func (j *job[Current, Previous]) Link(next *job[Current, Previous]) {
+	j.next = next
+}
+
+func (j *job[Current, Previous]) Wait() <-chan result[Current] {
 	return j.resultChan
 }
 
-func (j *job[T]) Exec() {
-	j.resultChan <- j.task()
+func (j *job[Current, Previous]) Exec() {
+	var idx int = 1
+	var previous result[Previous]
+	var current result[Current]
+
+	current = j.task(previous)
+	if current.err != nil {
+		current.err = fmt.Errorf("error in job number %d: %w", idx, current.err)
+		j.resultChan <- current
+		close(j.resultChan)
+		return
+	}
+	for j.next != nil {
+		idx++
+		out, ok := any(current.out).(Previous)
+		if !ok {
+			panic("damn...")
+		}
+		previous = result[Previous]{out: out, err: current.err}
+
+		current = j.next.task(previous)
+		if current.err != nil {
+			current.err = fmt.Errorf("error in job number %d: %w", idx, current.err)
+			break
+		}
+		j.next = j.next.next
+	}
+	j.resultChan <- current
 	close(j.resultChan)
 }
