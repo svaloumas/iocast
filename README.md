@@ -1,6 +1,6 @@
 # iocast
 
-Simple async task running library.
+An zero-dependency async task running library that aims to be simple, easy to use and flexible.
 
 ## install
 
