@@ -10,8 +10,8 @@ type Job interface {
 }
 
 type Result[T any] struct {
-	out T
-	err error
+	Out T
+	Err error
 }
 
 type task[Current, Previous any] func(previousResult Result[Previous]) Result[Current]
@@ -22,10 +22,17 @@ type job[Current, Previous any] struct {
 	next       *job[Current, Previous]
 }
 
-func NewTask[Arg, Current, Previous any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg, previousResult result[Previous]) (Current, error)) task[Current, Previous] {
+func NewTask[Arg, Current any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg) (Current, error)) task[Current, Current] {
+	return func(previous Result[Current]) Result[Current] {
+		out, err := fn(ctx, args)
+		return Result[Current]{Out: out, Err: err}
+	}
+}
+
+func NewTaskWithPreviousResult[Arg, Current, Previous any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg, previousResult Result[Previous]) (Current, error)) task[Current, Previous] {
 	return func(previous Result[Previous]) Result[Current] {
 		out, err := fn(ctx, args, previous)
-		return Result[Current]{out: out, err: err}
+		return Result[Current]{Out: out, Err: err}
 	}
 }
 
@@ -50,23 +57,23 @@ func (j *job[Current, Previous]) Exec() {
 	var current Result[Current]
 
 	current = j.task(previous)
-	if current.err != nil {
-		current.err = fmt.Errorf("error in job number %d: %w", idx, current.err)
+	if current.Err != nil {
+		current.Err = fmt.Errorf("error in job number %d: %w", idx, current.Err)
 		j.resultChan <- current
 		close(j.resultChan)
 		return
 	}
 	for j.next != nil {
 		idx++
-		out, ok := any(current.out).(Previous)
+		out, ok := any(current.Out).(Previous)
 		if !ok {
 			panic("damn...")
 		}
-		previous = Result[Previous]{out: out, err: current.err}
+		previous = Result[Previous]{Out: out, Err: current.Err}
 
 		current = j.next.task(previous)
-		if current.err != nil {
-			current.err = fmt.Errorf("error in job number %d: %w", idx, current.err)
+		if current.Err != nil {
+			current.Err = fmt.Errorf("error in job number %d: %w", idx, current.Err)
 			break
 		}
 		j.next = j.next.next
