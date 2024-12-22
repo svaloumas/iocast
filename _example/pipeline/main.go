@@ -62,9 +62,5 @@ func main() {
 	}
 
 	result := <-j.Wait()
-	if result.Err != nil {
-		log.Fatalf("got an error: %v", result.Err)
-	}
-
-	fmt.Printf("result: %+v", result.Out)
+	fmt.Printf("result: %+v", result)
 }

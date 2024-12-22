@@ -13,8 +13,9 @@ type Args struct {
 	age  int
 }
 
-type Out struct {
-	out string
+type OtherArgs struct {
+	foo []byte
+	bar int8
 }
 
 func main() {
@@ -22,15 +23,12 @@ func main() {
 	q.StartWithContext(context.Background())
 	defer q.Stop()
 
-	args := &Args{name: "maria", age: 3}
-	taskFunc := func(ctx context.Context, args *Args) (Out, error) {
+	myArgs := &Args{name: "maria", age: 3}
+	taskFunc := func(ctx context.Context, args *Args) (string, error) {
 		// do magic
-		out := Out{
-			out: fmt.Sprintf("%s is only %d", args.name, args.age),
-		}
-		return out, nil
+		return fmt.Sprintf("%s is only %d", args.name, args.age), nil
 	}
-	task := iocast.NewTask(context.Background(), args, taskFunc)
+	task := iocast.NewTask(context.Background(), myArgs, taskFunc)
 
 	j := iocast.NewJob(task)
 
@@ -39,10 +37,23 @@ func main() {
 		log.Fatal("queue is full")
 	}
 
-	result := <-j.Wait()
-	if result.Err != nil {
-		log.Fatalf("got an error: %v", result.Err)
+	otherArgs := &OtherArgs{foo: []byte("foo"), bar: 3}
+	taskFunc1 := func(ctx context.Context, args *OtherArgs) (int, error) {
+		// do magic
+		return len(args.foo) + int(args.bar), nil
+	}
+	task1 := iocast.NewTask(context.Background(), otherArgs, taskFunc1)
+
+	j1 := iocast.NewJob(task1)
+
+	ok = q.Enqueue(j1)
+	if !ok {
+		log.Fatal("queue is full")
 	}
 
-	fmt.Printf("result: %+v", result.Out)
+	result := <-j.Wait()
+	fmt.Printf("result: %+v\n", result)
+
+	result1 := <-j1.Wait()
+	fmt.Printf("result1: %+v\n", result1)
 }
