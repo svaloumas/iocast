@@ -14,70 +14,64 @@ type Result[T any] struct {
 	Err error
 }
 
-type task[Current, Previous any] func(previousResult Result[Previous]) Result[Current]
+type task[T any] func(previousResult Result[T]) Result[T]
 
-type job[Current, Previous any] struct {
-	task       task[Current, Previous]
-	resultChan chan Result[Current]
-	next       *job[Current, Previous]
+type job[T any] struct {
+	task       task[T]
+	resultChan chan Result[T]
+	next       *job[T]
 }
 
-func NewTask[Arg, Current any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg) (Current, error)) task[Current, Current] {
-	return func(previous Result[Current]) Result[Current] {
+func NewTask[Arg, T any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg) (T, error)) task[T] {
+	return func(previous Result[T]) Result[T] {
 		out, err := fn(ctx, args)
-		return Result[Current]{Out: out, Err: err}
+		return Result[T]{Out: out, Err: err}
 	}
 }
 
-func NewTaskWithPreviousResult[Arg, Current, Previous any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg, previousResult Result[Previous]) (Current, error)) task[Current, Previous] {
-	return func(previous Result[Previous]) Result[Current] {
+func NewTaskWithPreviousResult[Arg, T any](ctx context.Context, args Arg, fn func(ctx context.Context, args Arg, previousResult Result[T]) (T, error)) task[T] {
+	return func(previous Result[T]) Result[T] {
 		out, err := fn(ctx, args, previous)
-		return Result[Current]{Out: out, Err: err}
+		return Result[T]{Out: out, Err: err}
 	}
 }
 
-func NewJob[Current, Previous any](task task[Current, Previous]) *job[Current, Previous] {
-	return &job[Current, Previous]{
+func NewJob[T any](task task[T]) *job[T] {
+	return &job[T]{
 		task:       task,
-		resultChan: make(chan Result[Current], 1),
+		resultChan: make(chan Result[T], 1),
 	}
 }
 
-func (j *job[Current, Previous]) Link(next *job[Current, Previous]) {
+func (j *job[T]) Link(next *job[T]) {
 	j.next = next
 }
 
-func (j *job[Current, Previous]) Wait() <-chan Result[Current] {
+func (j *job[T]) Wait() <-chan Result[T] {
 	return j.resultChan
 }
 
-func (j *job[Current, Previous]) Exec() {
+func (j *job[T]) Exec() {
 	var idx int = 1
-	var previous Result[Previous]
-	var current Result[Current]
+	var result Result[T]
 
-	current = j.task(previous)
-	if current.Err != nil {
-		current.Err = fmt.Errorf("error in job number %d: %w", idx, current.Err)
-		j.resultChan <- current
+	result = j.task(result)
+	if result.Err != nil {
+		result.Err = fmt.Errorf("error in job number %d: %w", idx, result.Err)
+		j.resultChan <- result
 		close(j.resultChan)
 		return
 	}
 	for j.next != nil {
 		idx++
-		out, ok := any(current.Out).(Previous)
-		if !ok {
-			panic("damn...")
-		}
-		previous = Result[Previous]{Out: out, Err: current.Err}
 
-		current = j.next.task(previous)
-		if current.Err != nil {
-			current.Err = fmt.Errorf("error in job number %d: %w", idx, current.Err)
+		result = j.next.task(result)
+		if result.Err != nil {
+			result.Err = fmt.Errorf("error in job number %d: %w", idx, result.Err)
 			break
 		}
 		j.next = j.next.next
 	}
-	j.resultChan <- current
+	j.resultChan <- result
 	close(j.resultChan)
 }
