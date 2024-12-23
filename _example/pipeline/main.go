@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	// create the queue
-	q := iocast.NewQueue(4, 8)
+	// create the worker pool
+	q := iocast.NewWorkerPool(4, 8)
 	q.Start(context.Background())
 	defer q.Stop()
 
@@ -24,9 +24,9 @@ func main() {
 	uploadFn := iocast.NewTaskFuncWithPreviousResult(uploadArgs, UploadContent)
 
 	// create the wrapper tasks
-	downloadTask := iocast.TaskBuilder(downloadFn).Context(context.Background()).MaxRetries(5).Build()
-	processTask := iocast.TaskBuilder(processFn).Context(context.Background()).MaxRetries(4).Build()
-	uploadTask := iocast.TaskBuilder(uploadFn).Context(context.Background()).MaxRetries(3).Build()
+	downloadTask := iocast.TaskBuilder("download", downloadFn).Context(context.Background()).MaxRetries(5).Build()
+	processTask := iocast.TaskBuilder("process", processFn).Context(context.Background()).MaxRetries(4).Build()
+	uploadTask := iocast.TaskBuilder("upload", uploadFn).Context(context.Background()).MaxRetries(3).Build()
 
 	// create the pipeline
 	p, err := iocast.NewPipeline(downloadTask, processTask, uploadTask)

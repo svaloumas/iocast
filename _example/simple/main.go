@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	// create the queue
-	q := iocast.NewQueue(4, 8)
+	// create the worker pool
+	q := iocast.NewWorkerPool(4, 8)
 	q.Start(context.Background())
 	defer q.Stop()
 
@@ -18,7 +18,7 @@ func main() {
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
 	// create a wrapper task
-	t := iocast.TaskBuilder(taskFn).Context(context.Background()).MaxRetries(3).Build()
+	t := iocast.TaskBuilder("uuid", taskFn).Context(context.Background()).MaxRetries(3).Build()
 
 	// enqueue the task
 	ok := q.Enqueue(t)
