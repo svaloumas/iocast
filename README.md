@@ -36,7 +36,7 @@ func main() {
 	args := &Args{addr: "http://somewhere.net", id: 1}
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
-	t := iocast.NewTask(context.Background(), taskFn)
+	t := iocast.TaskBuilder(taskFn).Context(context.Background()).MaxRetries(3).Build()
 	q.Enqueue(t)
 
 	result := <-t.Wait()
