@@ -17,11 +17,20 @@ type Result[T any] struct {
 
 type taskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
 
+type taskBuilder[T any] struct {
+	ctx        context.Context
+	taskFn     taskFn[T]
+	resultChan chan Result[T]
+	next       *task[T]
+	maxRetries int
+}
+
 type task[T any] struct {
 	ctx        context.Context
 	taskFn     taskFn[T]
 	resultChan chan Result[T]
 	next       *task[T]
+	maxRetries int
 }
 
 type pipeline[T any] struct {
@@ -43,11 +52,35 @@ func NewTaskFuncWithPreviousResult[Arg, T any](args Arg, fn func(ctx context.Con
 	}
 }
 
-func NewTask[T any](ctx context.Context, fn taskFn[T]) *task[T] {
-	return &task[T]{
-		ctx:        ctx,
+func TaskBuilder[T any](fn taskFn[T]) *taskBuilder[T] {
+	t := &taskBuilder[T]{
 		taskFn:     fn,
 		resultChan: make(chan Result[T], 1),
+		maxRetries: 1,
+	}
+	return t
+}
+
+func (b *taskBuilder[T]) Context(ctx context.Context) *taskBuilder[T] {
+	b.ctx = ctx
+	return b
+}
+
+func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
+	if maxRetries < 1 {
+		maxRetries = 1
+	}
+	b.maxRetries = maxRetries
+	return b
+}
+
+func (b *taskBuilder[T]) Build() *task[T] {
+	return &task[T]{
+		ctx:        b.ctx,
+		taskFn:     b.taskFn,
+		resultChan: b.resultChan,
+		maxRetries: b.maxRetries,
+		next:       b.next,
 	}
 }
 
@@ -56,8 +89,10 @@ func NewPipeline[T any](tasks ...*task[T]) (*pipeline[T], error) {
 		return nil, errors.New("at least two tasks must be linked to create a pipeline")
 	}
 	head := tasks[0]
-	for _, t := range tasks[1:] {
-		head.link(t)
+	for i, t := range tasks {
+		if i < len(tasks)-1 {
+			t.link(tasks[i+1])
+		}
 	}
 	return &pipeline[T]{
 		head:       head,
@@ -69,6 +104,17 @@ func (t *task[T]) link(next *task[T]) {
 	t.next = next
 }
 
+func (t *task[T]) retry(previous Result[T]) Result[T] {
+	var result Result[T]
+	for i := 0; i < t.maxRetries; i++ {
+		result = t.taskFn(t.ctx, previous)
+		if result.Err == nil {
+			break
+		}
+	}
+	return result
+}
+
 func (t *task[T]) Wait() <-chan Result[T] {
 	return t.resultChan
 }
@@ -77,7 +123,7 @@ func (t *task[T]) Exec() {
 	var idx int = 1
 	var result Result[T]
 
-	result = t.taskFn(t.ctx, result)
+	result = t.retry(result)
 	if result.Err != nil {
 		result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
 		t.resultChan <- result
@@ -87,7 +133,7 @@ func (t *task[T]) Exec() {
 	for t.next != nil {
 		idx++
 
-		result = t.next.taskFn(t.ctx, result)
+		result = t.next.retry(result)
 		if result.Err != nil {
 			result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
 			break
