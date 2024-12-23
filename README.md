@@ -29,7 +29,7 @@ func DownloadContent(ctx context.Context, args *Args) (string, error) {
 }
 
 func main() {
-	q := iocast.NewQueue(4, 8)
+	q := iocast.NewWorkerPool(4, 8)
 	q.Start(context.Background())
 	defer q.Stop()
 
@@ -44,6 +44,19 @@ func main() {
 ```
 
 See [examples](_example/) for a detailed illustration of how to run simple tasks and linked tasks as pipelines.
+
+## features
+
+* Generic argument type. Pass any builtin or custom type as argument to your tasks.
+* Generic return value. Return any type of value from your tasks.
+* Optionally pass context to your tasks.
+* Lightweight and zero-dependency library.
+* Set retry-policy to each task.
+* Create pipelines to execute tasks sequentially. 
+* Optionally pass the result of the task to the next one as argument in a pipeline.
+* Result writer interface. Memory DB writer is provided but you can optionally implement writers for arbitrary storage engines.
+* Queue interface. Memory queue is provided but you can optionally implement your own. (WIP)
+* Scheduler. Pass either a specified timestamp for the task to be executed or a crontab for periodic execution. (WIP)
 
 ## test
 
