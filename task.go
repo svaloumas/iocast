@@ -57,7 +57,7 @@ func NewPipeline[T any](tasks ...*task[T]) (*pipeline[T], error) {
 	}
 	head := tasks[0]
 	for _, t := range tasks[1:] {
-		head.Link(t)
+		head.link(t)
 	}
 	return &pipeline[T]{
 		head:       head,
@@ -65,7 +65,7 @@ func NewPipeline[T any](tasks ...*task[T]) (*pipeline[T], error) {
 	}, nil
 }
 
-func (t *task[T]) Link(next *task[T]) {
+func (t *task[T]) link(next *task[T]) {
 	t.next = next
 }
 
