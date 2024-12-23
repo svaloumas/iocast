@@ -26,7 +26,7 @@ type task[T any] struct {
 	resultChan chan Result[T]
 	next       *task[T]
 	maxRetries int
-	writer     ResultWriter[T]
+	writer     ResultWriter
 }
 
 // NewTaskFunc initializes and returns a new task func.
@@ -70,7 +70,10 @@ func (t *task[T]) Write() error {
 	if t.writer != nil {
 		select {
 		case result := <-t.resultChan:
-			return t.writer.Write(t.id, result)
+			return t.writer.Write(t.id, Result[any]{
+				Out: result.Out,
+				Err: result.Err,
+			})
 		case <-t.ctx.Done():
 			return t.ctx.Err()
 		}

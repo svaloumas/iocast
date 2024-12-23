@@ -5,21 +5,21 @@ import (
 	"sync"
 )
 
-type ResultWriter[T any] interface {
-	Write(string, Result[T]) error
+type ResultWriter interface {
+	Write(string, Result[any]) error
 }
 
-type memWriter[T any] struct {
+type memWriter struct {
 	db *sync.Map
 }
 
-func NewMemWriter[T any](db *sync.Map) *memWriter[T] {
-	return &memWriter[T]{
+func NewMemWriter(db *sync.Map) ResultWriter {
+	return &memWriter{
 		db: db,
 	}
 }
 
-func (w *memWriter[T]) Write(id string, r Result[T]) error {
+func (w *memWriter) Write(id string, r Result[any]) error {
 	data, err := json.Marshal(r)
 	if err != nil {
 		return err
