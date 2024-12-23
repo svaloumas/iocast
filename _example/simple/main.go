@@ -2,58 +2,31 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/svaloumas/iocast"
 )
 
-type Args struct {
-	name string
-	age  int
-}
-
-type OtherArgs struct {
-	foo []byte
-	bar int8
-}
-
 func main() {
+	// create the queue
 	q := iocast.NewQueue(4, 8)
 	q.Start(context.Background())
 	defer q.Stop()
 
-	myArgs := &Args{name: "maria", age: 3}
-	taskFunc := func(ctx context.Context, args *Args) (string, error) {
-		// do magic
-		return fmt.Sprintf("%s is only %d", args.name, args.age), nil
-	}
-	task := iocast.NewTask(context.Background(), myArgs, taskFunc)
+	// create a task func
+	args := &Args{addr: "http://somewhere.net", id: 1}
+	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
-	j := iocast.NewJob(task)
+	// create a wrapper task
+	t := iocast.NewTask(context.Background(), taskFn)
 
-	ok := q.Enqueue(j)
+	// enqueue the task
+	ok := q.Enqueue(t)
 	if !ok {
 		log.Fatal("queue is full")
 	}
 
-	otherArgs := &OtherArgs{foo: []byte("foo"), bar: 3}
-	taskFunc1 := func(ctx context.Context, args *OtherArgs) (int, error) {
-		// do magic
-		return len(args.foo) + int(args.bar), nil
-	}
-	task1 := iocast.NewTask(context.Background(), otherArgs, taskFunc1)
-
-	j1 := iocast.NewJob(task1)
-
-	ok = q.Enqueue(j1)
-	if !ok {
-		log.Fatal("queue is full")
-	}
-
-	result := <-j.Wait()
-	fmt.Printf("result: %+v\n", result)
-
-	result1 := <-j1.Wait()
-	fmt.Printf("result1: %+v\n", result1)
+	// wait for the result
+	result := <-t.Wait()
+	log.Printf("result: %+v\n", result)
 }
