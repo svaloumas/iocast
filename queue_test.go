@@ -5,11 +5,7 @@ import (
 	"testing"
 )
 
-func testTaskFn(ctx context.Context, args string) (string, error) {
-	return args, nil
-}
-
-func TestEnqueue(t *testing.T) {
+func TestQueue(t *testing.T) {
 	q := NewQueue(1, 1)
 	q.Start(context.Background())
 	defer q.Stop()
