@@ -44,3 +44,9 @@ func main() {
 ```
 
 See [examples](_example/) for a detailed illustration of how to run simple tasks and linked tasks as pipelines.
+
+## test
+
+```bash
+go test ./... -v
+```
