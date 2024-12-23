@@ -10,7 +10,7 @@ go get github.com/svaloumas/iocast
 
 ## usage
 
-It utilizes Go Generics internally, enabling the flexibility to define your custom structs to use as arguments and arbitrary result types in your tasks.
+The module utilizes Go Generics internally, enabling the flexibility to define your custom structs to use as arguments and arbitrary result types in your tasks.
 
 ```go
 func DownloadContent(ctx context.Context, args *Args) (string, error) {
