@@ -16,8 +16,8 @@ func TestWorkerPool(t *testing.T) {
 
 	args := "test"
 	taskFn := NewTaskFunc(args, testTaskFn)
-	task := TaskBuilder(taskFn).Build()
-	task2 := TaskBuilder(taskFn).Build()
+	task := TaskBuilder("ok", taskFn).Build()
+	task2 := TaskBuilder("full queue", taskFn).Build()
 
 	tests := []struct {
 		name     string

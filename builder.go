@@ -5,16 +5,19 @@ import (
 )
 
 type taskBuilder[T any] struct {
+	id         string
 	ctx        context.Context
 	taskFn     taskFn[T]
 	resultChan chan Result[T]
 	next       *task[T]
 	maxRetries int
+	writer     ResultWriter[T]
 }
 
 // TaskBuilder creates and returns a new TaskBuilder instance.
-func TaskBuilder[T any](fn taskFn[T]) *taskBuilder[T] {
+func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
 	t := &taskBuilder[T]{
+		id:         id,
 		taskFn:     fn,
 		resultChan: make(chan Result[T], 1),
 		maxRetries: 1,
@@ -41,6 +44,11 @@ func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
 	return b
 }
 
+func (b *taskBuilder[T]) ResultWriter(w ResultWriter[T]) *taskBuilder[T] {
+	b.writer = w
+	return b
+}
+
 // Build builds a new task instance and returns it.
 func (b *taskBuilder[T]) Build() *task[T] {
 	return &task[T]{
@@ -49,5 +57,6 @@ func (b *taskBuilder[T]) Build() *task[T] {
 		resultChan: b.resultChan,
 		maxRetries: b.maxRetries,
 		next:       b.next,
+		writer:     b.writer,
 	}
 }

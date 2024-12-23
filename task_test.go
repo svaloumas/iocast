@@ -32,17 +32,17 @@ func TestTask(t *testing.T) {
 	args := "test"
 
 	taskFn := NewTaskFunc(args, testTaskFn)
-	task := TaskBuilder(taskFn).Build()
+	task := TaskBuilder("simple", taskFn).Build()
 
 	taskFnWithContext := NewTaskFunc(args, testTaskFnWithContext)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	cancel()
 
-	taskWithContext := TaskBuilder(taskFnWithContext).Context(ctx).Build()
+	taskWithContext := TaskBuilder("context", taskFnWithContext).Context(ctx).Build()
 
 	taskFnWithRetries := NewTaskFunc(args, testFailingTaskFn)
-	taskWithRetries := TaskBuilder(taskFnWithRetries).MaxRetries(3).Build()
+	taskWithRetries := TaskBuilder("retries", taskFnWithRetries).MaxRetries(3).Build()
 
 	tests := []struct {
 		name     string

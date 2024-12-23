@@ -2,6 +2,7 @@ package iocast
 
 import (
 	"context"
+	"log"
 	"sync"
 )
 
@@ -42,6 +43,12 @@ func (q queue) Start(ctx context.Context) {
 					if !ok {
 						return
 					}
+					go func() {
+						err := t.Write()
+						if err != nil {
+							log.Printf("error writing the result: %v", err)
+						}
+					}()
 					t.Exec()
 				case <-ctx.Done():
 					return

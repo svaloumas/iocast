@@ -13,10 +13,10 @@ func TestPipeline(t *testing.T) {
 	args := "test"
 
 	taskFn := NewTaskFunc(args, testTaskFn)
-	task := TaskBuilder(taskFn).Build()
+	task := TaskBuilder("head", taskFn).Build()
 
 	taskPipedFn := NewTaskFuncWithPreviousResult(args, testTaskPipedFn)
-	pipedTask := TaskBuilder(taskPipedFn).Build()
+	pipedTask := TaskBuilder("second", taskPipedFn).Build()
 
 	p, err := NewPipeline(task, pipedTask)
 	if err != nil {
@@ -39,7 +39,7 @@ func TestPipelineWithLessThanTwoTasks(t *testing.T) {
 	args := "test"
 
 	taskFn := NewTaskFunc(args, testTaskFn)
-	task := TaskBuilder(taskFn).Build()
+	task := TaskBuilder("head", taskFn).Build()
 
 	_, err := NewPipeline(task)
 	expectedMsg := "at least two tasks must be linked to create a pipeline"

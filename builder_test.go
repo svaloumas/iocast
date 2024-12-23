@@ -13,7 +13,7 @@ func TestTaskBuilder(t *testing.T) {
 
 	taskFn := NewTaskFunc(args, testTaskFn)
 	ctx := context.WithValue(context.Background(), someKey, "val")
-	task := TaskBuilder(taskFn).Context(ctx).MaxRetries(3).Build()
+	task := TaskBuilder("id", taskFn).Context(ctx).MaxRetries(3).Build()
 
 	if task.ctx.Value(someKey) != ctx.Value(someKey) {
 		t.Errorf("TaskBuilder set wrong task context: got %v want %v", task.ctx.Value(someKey), ctx.Value(someKey))

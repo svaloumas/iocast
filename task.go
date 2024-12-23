@@ -8,6 +8,7 @@ import (
 // Task represents a task to be executed.
 type Task interface {
 	Exec()
+	Write() error
 }
 
 // Result is the output of a task's execution.
@@ -19,11 +20,13 @@ type Result[T any] struct {
 type taskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
 
 type task[T any] struct {
+	id         string
 	ctx        context.Context
 	taskFn     taskFn[T]
 	resultChan chan Result[T]
 	next       *task[T]
 	maxRetries int
+	writer     ResultWriter[T]
 }
 
 // NewTaskFunc initializes and returns a new task func.
@@ -60,6 +63,19 @@ func (t *task[T]) retry(previous Result[T]) Result[T] {
 // Wait blocks on the result channel of the task until it is ready.
 func (t *task[T]) Wait() <-chan Result[T] {
 	return t.resultChan
+}
+
+// Wait blocks on the result channel if there's a writer and writes the result when ready..
+func (t *task[T]) Write() error {
+	if t.writer != nil {
+		select {
+		case result := <-t.resultChan:
+			return t.writer.Write(t.id, result)
+		case <-t.ctx.Done():
+			return t.ctx.Err()
+		}
+	}
+	return nil
 }
 
 // Exec executes the task.

@@ -35,3 +35,7 @@ func (p *pipeline[T]) Wait() <-chan Result[T] {
 func (p *pipeline[T]) Exec() {
 	p.head.Exec()
 }
+
+func (p *pipeline[T]) Write() error {
+	return p.head.Write()
+}
