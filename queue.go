@@ -5,16 +5,15 @@ import (
 	"sync"
 )
 
-// Queue represent a FIFO task queue.
-type Queue struct {
+type queue struct {
 	queue   chan Task
 	workers int
 	wg      *sync.WaitGroup
 }
 
 // NewQueue initializes and returns new Queue instance.
-func NewQueue(workers, capacity int) *Queue {
-	return &Queue{
+func NewQueue(workers, capacity int) *queue {
+	return &queue{
 		queue:   make(chan Task, capacity),
 		workers: workers,
 		wg:      &sync.WaitGroup{},
@@ -22,7 +21,7 @@ func NewQueue(workers, capacity int) *Queue {
 }
 
 // Enqueue pushes a task to the queue.
-func (q Queue) Enqueue(t Task) bool {
+func (q queue) Enqueue(t Task) bool {
 	select {
 	case q.queue <- t:
 		return true
@@ -32,7 +31,7 @@ func (q Queue) Enqueue(t Task) bool {
 }
 
 // Start starts the worker pool pattern.
-func (q Queue) Start(ctx context.Context) {
+func (q queue) Start(ctx context.Context) {
 	for i := 0; i < q.workers; i++ {
 		q.wg.Add(1)
 		go func() {
@@ -53,7 +52,7 @@ func (q Queue) Start(ctx context.Context) {
 }
 
 // Stop closes the queue and the worker pool gracefully.
-func (q Queue) Stop() {
+func (q queue) Stop() {
 	close(q.queue)
 	// Wait for the workers to run their last tasks.
 	q.wg.Wait()
