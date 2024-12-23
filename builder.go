@@ -21,6 +21,7 @@ func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
 		taskFn:     fn,
 		resultChan: make(chan Result[T], 1),
 		maxRetries: 1,
+		ctx:        context.Background(),
 	}
 	return t
 }
