@@ -3,7 +3,6 @@ package iocast
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 )
 
@@ -79,13 +78,12 @@ func TestTask(t *testing.T) {
 				}
 			case "task with context":
 				result := <-taskWithContext.Wait()
-				expectedMsg := fmt.Sprintf("error in task number 1: %s", ctx.Err().Error())
-				if result.Err.Error() != expectedMsg {
-					t.Errorf("Exec returned unexpected result error: got %v want %v", result.Err.Error(), expectedMsg)
+				if result.Err.Error() != ctx.Err().Error() {
+					t.Errorf("Exec returned unexpected result error: got %v want %v", result.Err.Error(), ctx.Err().Error())
 				}
 			case "task with retries":
 				result := <-taskWithRetries.Wait()
-				expectedMsg := fmt.Sprintf("error in task number 1: %s", "something went wrong")
+				expectedMsg := "something went wrong"
 				if result.Err.Error() != expectedMsg {
 					t.Errorf("Exec returned unexpected result error: got %v want %v", result.Err.Error(), expectedMsg)
 				}

@@ -69,7 +69,10 @@ func (t *task[T]) Exec() {
 
 	result = t.retry(result)
 	if result.Err != nil {
-		result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
+		// it's a pipeline so wrap the error
+		if t.next != nil {
+			result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
+		}
 		t.resultChan <- result
 		close(t.resultChan)
 		return
