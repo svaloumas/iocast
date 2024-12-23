@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestQueue(t *testing.T) {
+func TestWorkerPool(t *testing.T) {
 	q := NewQueue(1, 1)
 	q.Start(context.Background())
 	defer q.Stop()
