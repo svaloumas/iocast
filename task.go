@@ -5,10 +5,12 @@ import (
 	"fmt"
 )
 
+// Task represents a task to be executed.
 type Task interface {
 	Exec()
 }
 
+// Result is the output of a task's execution.
 type Result[T any] struct {
 	Out T
 	Err error
@@ -24,6 +26,7 @@ type task[T any] struct {
 	maxRetries int
 }
 
+// NewTaskFunc initializes and returns a new task func.
 func NewTaskFunc[Arg, T any](args Arg, fn func(ctx context.Context, args Arg) (T, error)) taskFn[T] {
 	return func(ctx context.Context, previous Result[T]) Result[T] {
 		out, err := fn(ctx, args)
@@ -31,6 +34,7 @@ func NewTaskFunc[Arg, T any](args Arg, fn func(ctx context.Context, args Arg) (T
 	}
 }
 
+// NewTaskFuncWithPreviousResult initializes and returns a new task func that can use the precious task's result.
 func NewTaskFuncWithPreviousResult[Arg, T any](args Arg, fn func(ctx context.Context, args Arg, previousResult Result[T]) (T, error)) taskFn[T] {
 	return func(ctx context.Context, previous Result[T]) Result[T] {
 		out, err := fn(ctx, args, previous)
@@ -53,10 +57,12 @@ func (t *task[T]) retry(previous Result[T]) Result[T] {
 	return result
 }
 
+// Wait blocks on the result channel of the task until it is ready.
 func (t *task[T]) Wait() <-chan Result[T] {
 	return t.resultChan
 }
 
+// Exec executes the task.
 func (t *task[T]) Exec() {
 	var idx int = 1
 	var result Result[T]

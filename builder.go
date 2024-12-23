@@ -12,6 +12,7 @@ type taskBuilder[T any] struct {
 	maxRetries int
 }
 
+// TaskBuilder creates and returns a new TaskBuilder instance.
 func TaskBuilder[T any](fn taskFn[T]) *taskBuilder[T] {
 	t := &taskBuilder[T]{
 		taskFn:     fn,
@@ -21,11 +22,13 @@ func TaskBuilder[T any](fn taskFn[T]) *taskBuilder[T] {
 	return t
 }
 
+// Context passes a context to the task builder.
 func (b *taskBuilder[T]) Context(ctx context.Context) *taskBuilder[T] {
 	b.ctx = ctx
 	return b
 }
 
+// Context passes a number of max retries to the task builder.
 func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
 	if maxRetries < 1 {
 		maxRetries = 1
@@ -34,6 +37,7 @@ func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
 	return b
 }
 
+// Build builds a new task instance and returns it.
 func (b *taskBuilder[T]) Build() *task[T] {
 	return &task[T]{
 		ctx:        b.ctx,
