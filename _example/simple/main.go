@@ -18,7 +18,7 @@ func main() {
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
 	// create a wrapper task
-	t := iocast.NewTask(context.Background(), taskFn)
+	t := iocast.TaskBuilder(taskFn).Context(context.Background()).MaxRetries(3).Build()
 
 	// enqueue the task
 	ok := q.Enqueue(t)

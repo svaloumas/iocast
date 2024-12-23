@@ -24,9 +24,9 @@ func main() {
 	uploadFn := iocast.NewTaskFuncWithPreviousResult(uploadArgs, UploadContent)
 
 	// create the wrapper tasks
-	downloadTask := iocast.NewTask(context.Background(), downloadFn)
-	processTask := iocast.NewTask(context.Background(), processFn)
-	uploadTask := iocast.NewTask(context.Background(), uploadFn)
+	downloadTask := iocast.TaskBuilder(downloadFn).Context(context.Background()).MaxRetries(5).Build()
+	processTask := iocast.TaskBuilder(processFn).Context(context.Background()).MaxRetries(4).Build()
+	uploadTask := iocast.TaskBuilder(uploadFn).Context(context.Background()).MaxRetries(3).Build()
 
 	// create the pipeline
 	p, err := iocast.NewPipeline(downloadTask, processTask, uploadTask)
@@ -42,5 +42,5 @@ func main() {
 
 	// wait for the result
 	result := <-p.Wait()
-	log.Printf("result out: %+v, error: %v", *result.Out, result.Err)
+	log.Printf("result out: %+v", *result.Out)
 }
