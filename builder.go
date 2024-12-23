@@ -24,6 +24,10 @@ func TaskBuilder[T any](fn taskFn[T]) *taskBuilder[T] {
 
 // Context passes a context to the task builder.
 func (b *taskBuilder[T]) Context(ctx context.Context) *taskBuilder[T] {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	b.ctx = ctx
 	return b
 }
