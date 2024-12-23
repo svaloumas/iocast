@@ -22,12 +22,12 @@ It utilizes Go Generics internally, enabling the flexibility to define your cust
 		// do magic
 		return fmt.Sprintf("%s is only %d", args.name, args.age), nil
 	}
-	task := iocast.NewTask(context.Background(), myArgs, taskFunc)
+	task := iocast.NewTaskFunc(context.Background(), myArgs, taskFunc)
 
-	j := iocast.NewJob(task)
+	t := iocast.NewTask(task)
 	q.Enqueue(j)
 
-	result := <-j.Wait()
+	result := <-t.Wait()
 ```
 
-See [examples](_example/) for a detailed illustration of how to run simple tasks and pipelines.
+See [examples](_example/) for a detailed illustration of how to run simple tasks and linked tasks as pipelines.

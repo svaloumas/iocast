@@ -6,22 +6,22 @@ import (
 )
 
 type Queue struct {
-	queue   chan Job
+	queue   chan Task
 	workers int
 	wg      *sync.WaitGroup
 }
 
 func NewQueue(workers, capacity int) *Queue {
 	return &Queue{
-		queue:   make(chan Job, capacity),
+		queue:   make(chan Task, capacity),
 		workers: workers,
 		wg:      &sync.WaitGroup{},
 	}
 }
 
-func (q Queue) Enqueue(j Job) bool {
+func (q Queue) Enqueue(t Task) bool {
 	select {
-	case q.queue <- j:
+	case q.queue <- t:
 		return true
 	default:
 		return false
@@ -35,11 +35,11 @@ func (q Queue) Start(ctx context.Context) {
 			defer q.wg.Done()
 			for {
 				select {
-				case j, ok := <-q.queue:
+				case t, ok := <-q.queue:
 					if !ok {
 						return
 					}
-					j.Exec()
+					t.Exec()
 				case <-ctx.Done():
 					return
 				}
