@@ -2,6 +2,7 @@ package iocast
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -21,6 +22,11 @@ type task[T any] struct {
 	taskFn     taskFn[T]
 	resultChan chan Result[T]
 	next       *task[T]
+}
+
+type pipeline[T any] struct {
+	head       *task[T]
+	resultChan chan Result[T]
 }
 
 func NewTaskFunc[Arg, T any](args Arg, fn func(ctx context.Context, args Arg) (T, error)) taskFn[T] {
@@ -43,6 +49,20 @@ func NewTask[T any](ctx context.Context, fn taskFn[T]) *task[T] {
 		taskFn:     fn,
 		resultChan: make(chan Result[T], 1),
 	}
+}
+
+func NewPipeline[T any](tasks ...*task[T]) (*pipeline[T], error) {
+	if len(tasks) < 2 {
+		return nil, errors.New("at least two tasks must be linked to create a pipeline")
+	}
+	head := tasks[0]
+	for _, t := range tasks[1:] {
+		head.Link(t)
+	}
+	return &pipeline[T]{
+		head:       head,
+		resultChan: head.resultChan,
+	}, nil
 }
 
 func (t *task[T]) Link(next *task[T]) {
@@ -76,4 +96,12 @@ func (t *task[T]) Exec() {
 	}
 	t.resultChan <- result
 	close(t.resultChan)
+}
+
+func (p *pipeline[T]) Wait() <-chan Result[T] {
+	return p.head.resultChan
+}
+
+func (p *pipeline[T]) Exec() {
+	p.head.Exec()
 }
