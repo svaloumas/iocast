@@ -6,13 +6,13 @@ import (
 )
 
 func TestWorkerPool(t *testing.T) {
-	q := NewQueue(1, 1)
-	q.Start(context.Background())
-	defer q.Stop()
+	p := NewWorkerPool(1, 1)
+	p.Start(context.Background())
+	defer p.Stop()
 
-	q2 := NewQueue(0, 0) // will refuse to enqueue
-	q2.Start(context.Background())
-	defer q2.Stop()
+	p2 := NewWorkerPool(0, 0) // will refuse to enqueue
+	p2.Start(context.Background())
+	defer p2.Stop()
 
 	args := "test"
 	taskFn := NewTaskFunc(args, testTaskFn)
@@ -22,29 +22,29 @@ func TestWorkerPool(t *testing.T) {
 	tests := []struct {
 		name     string
 		expected string
-		q        *queue
+		p        *workerpool
 	}{
 		{
 			"ok",
 			args,
-			q,
+			p,
 		},
 		{
 			"full queue",
 			args,
-			q2,
+			p2,
 		},
 	}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if i == 0 {
-				ok := tt.q.Enqueue(task)
+				ok := tt.p.Enqueue(task)
 				if !ok {
 					t.Errorf("unexpected full queue")
 				}
 			} else {
-				ok := tt.q.Enqueue(task2)
+				ok := tt.p.Enqueue(task2)
 				if ok {
 					t.Errorf("unexpected not full queue")
 				}

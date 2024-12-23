@@ -6,15 +6,15 @@ import (
 	"sync"
 )
 
-type queue struct {
+type workerpool struct {
 	queue   chan Task
 	workers int
 	wg      *sync.WaitGroup
 }
 
-// NewQueue initializes and returns new Queue instance.
-func NewQueue(workers, capacity int) *queue {
-	return &queue{
+// NewWorkerPool initializes and returns new workerpool instance.
+func NewWorkerPool(workers, capacity int) *workerpool {
+	return &workerpool{
 		queue:   make(chan Task, capacity),
 		workers: workers,
 		wg:      &sync.WaitGroup{},
@@ -22,9 +22,9 @@ func NewQueue(workers, capacity int) *queue {
 }
 
 // Enqueue pushes a task to the queue.
-func (q queue) Enqueue(t Task) bool {
+func (p workerpool) Enqueue(t Task) bool {
 	select {
-	case q.queue <- t:
+	case p.queue <- t:
 		return true
 	default:
 		return false
@@ -32,14 +32,14 @@ func (q queue) Enqueue(t Task) bool {
 }
 
 // Start starts the worker pool pattern.
-func (q queue) Start(ctx context.Context) {
-	for i := 0; i < q.workers; i++ {
-		q.wg.Add(1)
+func (p workerpool) Start(ctx context.Context) {
+	for i := 0; i < p.workers; i++ {
+		p.wg.Add(1)
 		go func() {
-			defer q.wg.Done()
+			defer p.wg.Done()
 			for {
 				select {
-				case t, ok := <-q.queue:
+				case t, ok := <-p.queue:
 					if !ok {
 						return
 					}
@@ -59,8 +59,8 @@ func (q queue) Start(ctx context.Context) {
 }
 
 // Stop closes the queue and the worker pool gracefully.
-func (q queue) Stop() {
-	close(q.queue)
+func (p workerpool) Stop() {
+	close(p.queue)
 	// Wait for the workers to run their last tasks.
-	q.wg.Wait()
+	p.wg.Wait()
 }
