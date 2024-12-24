@@ -7,6 +7,7 @@ import (
 
 // Task represents a task to be executed.
 type Task interface {
+	Id() string
 	Exec()
 	Write() error
 }
@@ -65,7 +66,11 @@ func (t *task[T]) Wait() <-chan Result[T] {
 	return t.resultChan
 }
 
-// Wait blocks on the result channel if there's a writer and writes the result when ready..
+func (t *task[T]) Id() string {
+	return t.id
+}
+
+// Wait blocks on the result channel if there's a writer and writes the result when ready.
 func (t *task[T]) Write() error {
 	if t.writer != nil {
 		select {

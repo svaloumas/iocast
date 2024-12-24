@@ -46,7 +46,7 @@ func (p workerpool) Start(ctx context.Context) {
 					go func() {
 						err := t.Write()
 						if err != nil {
-							log.Printf("error writing the result: %v", err)
+							log.Printf("error writing the result of task %s: %v", t.Id(), err)
 						}
 					}()
 					t.Exec()

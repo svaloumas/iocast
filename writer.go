@@ -13,7 +13,7 @@ type memWriter struct {
 	db *sync.Map
 }
 
-func NewMemWriter(db *sync.Map) ResultWriter {
+func NewMemWriter(db *sync.Map) *memWriter {
 	return &memWriter{
 		db: db,
 	}
