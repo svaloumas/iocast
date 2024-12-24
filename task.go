@@ -24,9 +24,9 @@ type Task interface {
 type status string
 
 type metadata struct {
-	CreatetAt *time.Time
-	StartedAt *time.Time
-	Elapsed   *time.Duration
+	CreatetAt time.Time
+	StartedAt time.Time
+	Elapsed   time.Duration
 	Status    status
 }
 
@@ -71,20 +71,17 @@ func (t *task[T]) link(next *task[T]) {
 }
 
 func (t *task[T]) markRunning() {
-	startedAt := time.Now().UTC()
-	t.metadata.StartedAt = &startedAt
+	t.metadata.StartedAt = time.Now().UTC()
 	t.metadata.Status = STATUS_RUNNING
 }
 
 func (t *task[T]) markFailed() {
-	elapsed := time.Since(*t.metadata.StartedAt)
-	t.metadata.Elapsed = &elapsed
+	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
 	t.metadata.Status = STATUS_FAILED
 }
 
 func (t *task[T]) markSuccess() {
-	elapsed := time.Since(*t.metadata.StartedAt)
-	t.metadata.Elapsed = &elapsed
+	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
 	t.metadata.Status = STATUS_SUCCESS
 }
 
