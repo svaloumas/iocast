@@ -20,9 +20,9 @@ func main() {
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
 	// create a wrapper task
-	db := &sync.Map{}
-	w := iocast.NewMemWriter(db)
-	t := iocast.TaskBuilder("uuid", taskFn).ResultWriter(w).Build()
+	m := &sync.Map{}
+	db := iocast.NewMemDB(m)
+	t := iocast.TaskBuilder("uuid", taskFn).Database(db).Build()
 
 	// enqueue the task
 	ok := p.Enqueue(t)
@@ -32,7 +32,7 @@ func main() {
 
 	// wait for the result
 	time.Sleep(500 * time.Millisecond)
-	data, ok := db.Load("uuid")
+	data, ok := m.Load("uuid")
 	if !ok {
 		log.Fatal("result not written")
 	}
