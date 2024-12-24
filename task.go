@@ -157,6 +157,7 @@ func (t *task[T]) Exec() {
 		}
 		t.next = t.next.next
 	}
+	result.metadata = t.metadata
 	t.resultChan <- result
 	close(t.resultChan)
 }
