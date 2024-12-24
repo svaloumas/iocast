@@ -5,12 +5,13 @@ import (
 )
 
 type pipeline[T any] struct {
+	id         string
 	head       *task[T]
 	resultChan chan Result[T]
 }
 
 // NewPipeline links tasks together to execute them in order, returns a pipeline instance.
-func NewPipeline[T any](tasks ...*task[T]) (*pipeline[T], error) {
+func NewPipeline[T any](id string, tasks ...*task[T]) (*pipeline[T], error) {
 	if len(tasks) < 2 {
 		return nil, errors.New("at least two tasks must be linked to create a pipeline")
 	}
@@ -21,6 +22,7 @@ func NewPipeline[T any](tasks ...*task[T]) (*pipeline[T], error) {
 		}
 	}
 	return &pipeline[T]{
+		id:         id,
 		head:       head,
 		resultChan: head.resultChan,
 	}, nil
@@ -38,4 +40,9 @@ func (p *pipeline[T]) Exec() {
 
 func (p *pipeline[T]) Write() error {
 	return p.head.Write()
+}
+
+// Id is an ID geter.
+func (p *pipeline[T]) Id() string {
+	return p.id
 }

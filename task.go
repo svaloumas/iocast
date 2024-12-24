@@ -66,6 +66,7 @@ func (t *task[T]) Wait() <-chan Result[T] {
 	return t.resultChan
 }
 
+// Id is an ID geter.
 func (t *task[T]) Id() string {
 	return t.id
 }
