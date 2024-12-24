@@ -29,7 +29,7 @@ func main() {
 	uploadTask := iocast.TaskBuilder("upload", uploadFn).Context(context.Background()).MaxRetries(3).Build()
 
 	// create the pipeline
-	p, err := iocast.NewPipeline(downloadTask, processTask, uploadTask)
+	p, err := iocast.NewPipeline("some id", downloadTask, processTask, uploadTask)
 	if err != nil {
 		log.Fatalf("error creating a pipeine: %s", err)
 	}
