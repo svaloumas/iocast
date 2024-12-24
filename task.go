@@ -48,7 +48,7 @@ type task[T any] struct {
 	resultChan chan Result[T]
 	next       *task[T]
 	maxRetries int
-	writer     ResultWriter
+	db         DB
 	metadata   metadata
 }
 
@@ -119,10 +119,10 @@ func (t *task[T]) Id() string {
 
 // Wait blocks on the result channel if there's a writer and writes the result when ready.
 func (t *task[T]) Write() error {
-	if t.writer != nil {
+	if t.db != nil {
 		select {
 		case result := <-t.resultChan:
-			return t.writer.Write(t.id, Result[any]{
+			return t.db.Write(t.id, Result[any]{
 				Out:      result.Out,
 				Err:      result.Err,
 				Metadata: result.Metadata,
@@ -167,6 +167,7 @@ func (t *task[T]) Exec() {
 	close(t.resultChan)
 }
 
+// Metadata is a metadata getter.
 func (t *task[T]) Metadata() metadata {
 	t.mu.Lock()
 	defer t.mu.Unlock()

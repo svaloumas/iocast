@@ -12,7 +12,7 @@ type taskBuilder[T any] struct {
 	resultChan chan Result[T]
 	next       *task[T]
 	maxRetries int
-	writer     ResultWriter
+	db         DB
 	metadata   metadata
 }
 
@@ -51,12 +51,11 @@ func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
 	return b
 }
 
-func (b *taskBuilder[T]) ResultWriter(w ResultWriter) *taskBuilder[T] {
-	b.writer = w
+func (b *taskBuilder[T]) Database(db DB) *taskBuilder[T] {
+	b.db = db
 	return b
 }
 
-// Build builds a new task instance and returns it.
 func (b *taskBuilder[T]) Build() *task[T] {
 	return &task[T]{
 		id:         b.id,
@@ -65,7 +64,7 @@ func (b *taskBuilder[T]) Build() *task[T] {
 		resultChan: b.resultChan,
 		maxRetries: b.maxRetries,
 		next:       b.next,
-		writer:     b.writer,
+		db:         b.db,
 		metadata:   b.metadata,
 	}
 }

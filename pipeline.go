@@ -47,6 +47,7 @@ func (p *pipeline[T]) Id() string {
 	return p.id
 }
 
+// Metadata is a metadata getter.
 func (p *pipeline[T]) Metadata() metadata {
 	p.head.mu.Lock()
 	defer p.head.mu.Unlock()
