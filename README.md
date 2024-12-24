@@ -39,6 +39,9 @@ func main() {
 	t := iocast.TaskBuilder(taskFn).Context(context.Background()).MaxRetries(3).Build()
 	q.Enqueue(t)
 
+	m := t.Metadata()
+	log.Printf("status: %s", m.Status)
+
 	result := <-t.Wait()
 }
 ```
@@ -55,7 +58,7 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 * Create pipelines to execute tasks sequentially. 
 * Optionally pass the result of the task to the next one as argument in a pipeline.
 * Result writer interface. Memory DB writer is provided but you can optionally implement writers for arbitrary storage engines.
-* Request for task metadata like status, time of creation, execution, elapsed time, etc. (WIP)
+* Request for task metadata like status, time of creation, execution, elapsed time, etc. Written also to the storage with the result.
 * Scheduler. Pass either a specified timestamp for the task to be executed or a crontab for periodic execution. (WIP)
 
 ## test
