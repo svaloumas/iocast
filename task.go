@@ -3,6 +3,14 @@ package iocast
 import (
 	"context"
 	"fmt"
+	"time"
+)
+
+const (
+	STATUS_PENDING = "PENING"
+	STATUS_RUNNING = "RUNNING"
+	STATUS_FAILED  = "FAILED"
+	STATUS_SUCCESS = "SUCCESS"
 )
 
 // Task represents a task to be executed.
@@ -10,12 +18,23 @@ type Task interface {
 	Id() string
 	Exec()
 	Write() error
+	Metadata() metadata
+}
+
+type status string
+
+type metadata struct {
+	CreatetAt *time.Time
+	StartedAt *time.Time
+	Elapsed   *time.Duration
+	Status    status
 }
 
 // Result is the output of a task's execution.
 type Result[T any] struct {
-	Out T
-	Err error
+	Out      T
+	Err      error
+	metadata metadata
 }
 
 type taskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
@@ -28,6 +47,7 @@ type task[T any] struct {
 	next       *task[T]
 	maxRetries int
 	writer     ResultWriter
+	metadata   metadata
 }
 
 // NewTaskFunc initializes and returns a new task func.
@@ -50,11 +70,32 @@ func (t *task[T]) link(next *task[T]) {
 	t.next = next
 }
 
+func (t *task[T]) markRunning() {
+	startedAt := time.Now().UTC()
+	t.metadata.StartedAt = &startedAt
+	t.metadata.Status = STATUS_RUNNING
+}
+
+func (t *task[T]) markFailed() {
+	elapsed := time.Since(*t.metadata.StartedAt)
+	t.metadata.Elapsed = &elapsed
+	t.metadata.Status = STATUS_FAILED
+}
+
+func (t *task[T]) markSuccess() {
+	elapsed := time.Since(*t.metadata.StartedAt)
+	t.metadata.Elapsed = &elapsed
+	t.metadata.Status = STATUS_SUCCESS
+}
+
 func (t *task[T]) retry(previous Result[T]) Result[T] {
 	var result Result[T]
+
+	t.markRunning()
 	for i := 0; i < t.maxRetries; i++ {
 		result = t.taskFn(t.ctx, previous)
 		if result.Err == nil {
+			t.markSuccess()
 			break
 		}
 	}
@@ -77,8 +118,9 @@ func (t *task[T]) Write() error {
 		select {
 		case result := <-t.resultChan:
 			return t.writer.Write(t.id, Result[any]{
-				Out: result.Out,
-				Err: result.Err,
+				Out:      result.Out,
+				Err:      result.Err,
+				metadata: t.metadata,
 			})
 		case <-t.ctx.Done():
 			return t.ctx.Err()
@@ -98,6 +140,7 @@ func (t *task[T]) Exec() {
 		if t.next != nil {
 			result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
 		}
+		t.markFailed()
 		t.resultChan <- result
 		close(t.resultChan)
 		return
@@ -108,10 +151,16 @@ func (t *task[T]) Exec() {
 		result = t.next.retry(result)
 		if result.Err != nil {
 			result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
+			// mark the head of the pipeline
+			t.markFailed()
 			break
 		}
 		t.next = t.next.next
 	}
 	t.resultChan <- result
 	close(t.resultChan)
+}
+
+func (t *task[T]) Metadata() metadata {
+	return t.metadata
 }

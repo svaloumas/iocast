@@ -2,6 +2,7 @@ package iocast
 
 import (
 	"context"
+	"time"
 )
 
 type taskBuilder[T any] struct {
@@ -12,16 +13,22 @@ type taskBuilder[T any] struct {
 	next       *task[T]
 	maxRetries int
 	writer     ResultWriter
+	metadata   metadata
 }
 
 // TaskBuilder creates and returns a new TaskBuilder instance.
 func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
+	createdAt := time.Now().UTC()
 	t := &taskBuilder[T]{
 		id:         id,
 		taskFn:     fn,
 		resultChan: make(chan Result[T], 1),
 		maxRetries: 1,
 		ctx:        context.Background(),
+		metadata: metadata{
+			CreatetAt: &createdAt,
+			Status:    STATUS_PENDING,
+		},
 	}
 	return t
 }
@@ -60,5 +67,6 @@ func (b *taskBuilder[T]) Build() *task[T] {
 		maxRetries: b.maxRetries,
 		next:       b.next,
 		writer:     b.writer,
+		metadata:   b.metadata,
 	}
 }

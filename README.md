@@ -55,7 +55,7 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 * Create pipelines to execute tasks sequentially. 
 * Optionally pass the result of the task to the next one as argument in a pipeline.
 * Result writer interface. Memory DB writer is provided but you can optionally implement writers for arbitrary storage engines.
-* Queue interface. Memory queue is provided but you can optionally implement your own. (WIP)
+* Request for task metadata like status, time of creation, execution, elapsed time, etc. (WIP)
 * Scheduler. Pass either a specified timestamp for the task to be executed or a crontab for periodic execution. (WIP)
 
 ## test

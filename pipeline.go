@@ -46,3 +46,7 @@ func (p *pipeline[T]) Write() error {
 func (p *pipeline[T]) Id() string {
 	return p.id
 }
+
+func (p *pipeline[T]) Metadata() metadata {
+	return p.head.metadata
+}
