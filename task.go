@@ -3,6 +3,7 @@ package iocast
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -40,6 +41,7 @@ type Result[T any] struct {
 type taskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
 
 type task[T any] struct {
+	mu         sync.RWMutex
 	id         string
 	ctx        context.Context
 	taskFn     taskFn[T]
@@ -71,16 +73,22 @@ func (t *task[T]) link(next *task[T]) {
 }
 
 func (t *task[T]) markRunning() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.metadata.StartedAt = time.Now().UTC()
 	t.metadata.Status = STATUS_RUNNING
 }
 
 func (t *task[T]) markFailed() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
 	t.metadata.Status = STATUS_FAILED
 }
 
 func (t *task[T]) markSuccess() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
 	t.metadata.Status = STATUS_SUCCESS
 }
@@ -160,5 +168,7 @@ func (t *task[T]) Exec() {
 }
 
 func (t *task[T]) Metadata() metadata {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.metadata
 }

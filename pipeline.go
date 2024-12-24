@@ -48,5 +48,7 @@ func (p *pipeline[T]) Id() string {
 }
 
 func (p *pipeline[T]) Metadata() metadata {
+	p.head.mu.Lock()
+	defer p.head.mu.Unlock()
 	return p.head.metadata
 }
