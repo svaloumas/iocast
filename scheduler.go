@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrEitherWhenOrInterval = errors.New("cannot use when and interval together")
+	ErrScheduledRunInThePast = errors.New("cannot schedule run in the past: when < now")
 )
 
 // ScheduleDB represents the storage used for the Schedule entities.
@@ -21,15 +21,9 @@ type scheduleMemDB struct {
 	db *sync.Map
 }
 
-// Schedule represents a task's schedule.
 type Schedule struct {
-	task     Task
-	Days     []time.Weekday
-	When     time.Time
-	Interval time.Duration
-	lastRun  time.Time
-	nextRun  time.Time
-	once     bool
+	task  Task
+	RunAt time.Time
 }
 
 type scheduler struct {
@@ -56,33 +50,13 @@ func NewScheduleMemDB(db *sync.Map) *scheduleMemDB {
 	}
 }
 
-// ScheduleRun schedules an once-off run for the task.
-func (s *scheduler) ScheduleRun(t Task, when time.Time) error {
-	today := time.Now().Weekday()
+// ScheduleRun schedules a run for the task.
+func (s *scheduler) Schedule(t Task, runAt time.Time) error {
 	schedule := &Schedule{
-		task: t,
-		Days: []time.Weekday{today},
-		When: when,
-		once: true,
+		task:  t,
+		RunAt: runAt,
 	}
 	return s.db.Store(t.Id(), schedule)
-}
-
-// Schedule schedules a task for periodic execution.
-// NOTE: Interval min value is set to 5 mins.
-func (s *scheduler) Schedule(t Task, given Schedule) error {
-	if err := s.validate(given); err != nil {
-		return err
-	}
-	schedule := &Schedule{
-		task:     t,
-		Days:     given.Days,
-		When:     given.When,
-		Interval: given.Interval,
-		once:     false,
-	}
-	return s.db.Store(t.Id(), schedule)
-
 }
 
 // Dispatch polls the databases for any due schedules and enqueues their tasks for execution.
@@ -104,16 +78,6 @@ func (s *scheduler) Dispatch() {
 					ok := s.wp.Enqueue(schedule.task)
 					if !ok {
 						log.Printf("failed to enqueue task with id: %s", schedule.task.Id())
-					} else {
-						schedule.lastRun = now
-						schedule.nextRun = now.Add(schedule.Interval)
-						if schedule.once {
-							// remove scheduled days
-							schedule.Days = nil
-						}
-						if err := s.db.Store(schedule.task.Id(), schedule); err != nil {
-							log.Printf("failed to update schedule for task with id: %s", schedule.task.Id())
-						}
 					}
 				}
 			case <-s.done:
@@ -130,15 +94,9 @@ func (s *scheduler) Stop() {
 }
 
 func (s *scheduler) validate(schedule Schedule) error {
-	if !schedule.When.IsZero() && schedule.Interval.Nanoseconds() != 0 {
-		return ErrEitherWhenOrInterval
-	}
-	if schedule.Interval.Nanoseconds() != 0 {
-		minutes := schedule.Interval.Minutes()
-		if minutes < 5 {
-			// minimum interval value is 5 minutes
-			schedule.Interval = 5 * time.Minute
-		}
+	now := time.Now()
+	if schedule.RunAt.Before(now) {
+		return ErrScheduledRunInThePast
 	}
 	return nil
 }
@@ -158,36 +116,16 @@ func (m *scheduleMemDB) FetchDue(now time.Time) ([]*Schedule, error) {
 			return true // skip
 		}
 
-		today := now.Weekday()
-		if contains(schedule.Days, today) {
-			// handle whens
-			if !schedule.When.IsZero() {
-				runTime := time.Date(
-					now.Year(), now.Month(), now.Day(),
-					schedule.When.Hour(), schedule.When.Minute(),
-					schedule.When.Second(), 0, now.Location(),
-				)
+		runTime := time.Date(
+			now.Year(), now.Month(), now.Day(),
+			schedule.RunAt.Hour(), schedule.RunAt.Minute(),
+			schedule.RunAt.Second(), 0, now.Location(),
+		)
 
-				if now.After(runTime) && (schedule.lastRun.IsZero() || schedule.lastRun.Before(runTime)) {
-					dueSchedules = append(dueSchedules, schedule)
-				}
-			} else {
-				// handle intervals
-				if now.After(schedule.nextRun) && (schedule.lastRun.IsZero() || schedule.lastRun.Before(schedule.nextRun)) {
-					dueSchedules = append(dueSchedules, schedule)
-				}
-			}
+		if now.After(runTime) {
+			dueSchedules = append(dueSchedules, schedule)
 		}
 		return true
 	})
 	return dueSchedules, nil
-}
-
-func contains(days []time.Weekday, day time.Weekday) bool {
-	for _, v := range days {
-		if v == day {
-			return true
-		}
-	}
-	return false
 }
