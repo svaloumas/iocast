@@ -26,6 +26,9 @@ func main() {
 		log.Fatal("queue is full")
 	}
 
+	m := t.Metadata()
+	log.Printf("status: %s", m.Status)
+
 	// wait for the result
 	result := <-t.Wait()
 	log.Printf("result: %+v\n", result)
