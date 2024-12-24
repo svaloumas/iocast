@@ -50,15 +50,14 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 
 ## features
 
-* Generic argument type. Pass any builtin or custom type as argument to your tasks.
-* Generic return value. Return any type of value from your tasks.
-* Optionally pass context to your tasks.
-* Set retry-policy to each task.
-* Create pipelines to execute tasks sequentially. 
-* Optionally pass the result of the task to the next one as argument in a pipeline.
-* Database interface. An in-memory DB is provided but you can optionally implement drivers for arbitrary storage engines.
-* Request for task metadata like status, time of creation, execution, elapsed time, etc. Metadata also get written also to the storage as part of the result.
-* Scheduler. Pass either a specified timestamp for the task to be executed or a crontab for periodic execution. (WIP)
+* Generic Task Arguments. Pass any built-in or custom type as an argument to your tasks.
+* Flexible Task Results. Return any type of value from your tasks.
+* Context Awareness. Optionally include a context when running tasks.
+* Retry Policy. Define the number of retry attempts for each task.
+* Task Pipelines. Chain tasks to execute sequentially, with the option to pass the result of one task as the argument for the next.
+* Database Interface. Use the built-in in-memory database or implement custom drivers for other storage engines.
+* Task Metadata. Retrieve metadata such as status, creation time, execution time, and elapsed time. Metadata is also stored with the task results.
+* Scheduler: Schedule tasks to run at a specific timestamp or set up periodic execution.
 
 ## test
 
