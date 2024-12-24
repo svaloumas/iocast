@@ -18,7 +18,7 @@ func TestPipeline(t *testing.T) {
 	taskPipedFn := NewTaskFuncWithPreviousResult(args, testTaskPipedFn)
 	pipedTask := TaskBuilder("second", taskPipedFn).Build()
 
-	p, err := NewPipeline(task, pipedTask)
+	p, err := NewPipeline("id", task, pipedTask)
 	if err != nil {
 		t.Errorf("NewPipeline returned unexpected error: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestPipelineWithLessThanTwoTasks(t *testing.T) {
 	taskFn := NewTaskFunc(args, testTaskFn)
 	task := TaskBuilder("head", taskFn).Build()
 
-	_, err := NewPipeline(task)
+	_, err := NewPipeline("id", task)
 	expectedMsg := "at least two tasks must be linked to create a pipeline"
 	if err == nil {
 		t.Errorf("NewPipeline did not return expected error: got nil want %v", expectedMsg)
