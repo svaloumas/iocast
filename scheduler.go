@@ -15,6 +15,7 @@ var (
 type ScheduleDB interface {
 	Store(string, *Schedule) error
 	FetchDue(time.Time) ([]*Schedule, error)
+	Delete(string) error
 }
 
 type scheduleMemDB struct {
@@ -53,6 +54,9 @@ func NewScheduleMemDB(db *sync.Map) *scheduleMemDB {
 
 // ScheduleRun schedules a run for the task.
 func (s *scheduler) Schedule(t Task, runAt time.Time) error {
+	if err := s.validate(runAt); err != nil {
+		return err
+	}
 	schedule := &Schedule{
 		task:  t,
 		RunAt: runAt,
@@ -80,6 +84,11 @@ func (s *scheduler) Dispatch() {
 					if !ok {
 						log.Printf("failed to enqueue task with id: %s", schedule.task.Id())
 					}
+					err := s.db.Delete(schedule.task.Id())
+					if err != nil {
+						log.Printf("failed to delete due schedule: %v", err)
+						continue
+					}
 				}
 			case <-s.done:
 				ticker.Stop()
@@ -94,9 +103,8 @@ func (s *scheduler) Stop() {
 	close(s.done)
 }
 
-func (s *scheduler) validate(schedule Schedule) error {
-	now := time.Now()
-	if schedule.RunAt.Before(now) {
+func (s *scheduler) validate(runAt time.Time) error {
+	if runAt.Before(time.Now()) {
 		return ErrScheduledRunInThePast
 	}
 	return nil
@@ -105,6 +113,12 @@ func (s *scheduler) validate(schedule Schedule) error {
 // Store stores the schedule in the database.
 func (m *scheduleMemDB) Store(id string, s *Schedule) error {
 	m.db.Store(id, s)
+	return nil
+}
+
+// Delete removes a schedule from the database.
+func (m *scheduleMemDB) Delete(id string) error {
+	m.db.Delete(id)
 	return nil
 }
 
