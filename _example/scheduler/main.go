@@ -20,26 +20,19 @@ func main() {
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
 	// create a wrapper task
-	t := iocast.TaskBuilder("uuid", taskFn).Context(context.Background()).MaxRetries(3).Build()
-	t2 := iocast.TaskBuilder("uuid2", taskFn).Context(context.Background()).MaxRetries(3).Build()
+	t := iocast.TaskBuilder("uuid", taskFn).Build()
 
-	// schedule the task
+	// create the scheduler
 	m := &sync.Map{}
 	db := iocast.NewScheduleMemDB(m)
-	s := iocast.NewScheduler(db, p, time.Second)
+	s := iocast.NewScheduler(db, p, 100*time.Millisecond)
 	defer s.Stop()
 
+	// run it
 	s.Dispatch()
 
-	err := s.ScheduleRun(t, time.Now().Add(time.Minute))
-	if err != nil {
-		log.Printf("err: %v", err)
-	}
-
-	err = s.Schedule(t2, iocast.Schedule{
-		Days:     []time.Weekday{0, 1},
-		Interval: 2 * time.Hour,
-	})
+	// schedule the task
+	err := s.Schedule(t, time.Now().Add(200*time.Millisecond))
 	if err != nil {
 		log.Printf("err: %v", err)
 	}
