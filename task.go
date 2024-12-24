@@ -117,7 +117,7 @@ func (t *task[T]) Write() error {
 			return t.writer.Write(t.id, Result[any]{
 				Out:      result.Out,
 				Err:      result.Err,
-				metadata: t.metadata,
+				metadata: result.metadata,
 			})
 		case <-t.ctx.Done():
 			return t.ctx.Err()
