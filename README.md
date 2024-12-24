@@ -53,16 +53,15 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 * Generic argument type. Pass any builtin or custom type as argument to your tasks.
 * Generic return value. Return any type of value from your tasks.
 * Optionally pass context to your tasks.
-* Lightweight and zero-dependency library.
 * Set retry-policy to each task.
 * Create pipelines to execute tasks sequentially. 
 * Optionally pass the result of the task to the next one as argument in a pipeline.
 * Result writer interface. Memory DB writer is provided but you can optionally implement writers for arbitrary storage engines.
-* Request for task metadata like status, time of creation, execution, elapsed time, etc. Written also to the storage with the result.
+* Request for task metadata like status, time of creation, execution, elapsed time, etc. Metadata also get written also to the storage as part of the result.
 * Scheduler. Pass either a specified timestamp for the task to be executed or a crontab for periodic execution. (WIP)
 
 ## test
 
 ```bash
-go test ./... -v
+go test -v ./...
 ```
