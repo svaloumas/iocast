@@ -11,6 +11,7 @@ var (
 	ErrEitherWhenOrInterval = errors.New("cannot use when and interval together")
 )
 
+// ScheduleDB represents the storage used for the Schedule entities.
 type ScheduleDB interface {
 	Store(string, *Schedule) error
 	FetchDue(time.Time) ([]*Schedule, error)
@@ -20,6 +21,7 @@ type scheduleMemDB struct {
 	db *sync.Map
 }
 
+// Schedule represents a task's schedule.
 type Schedule struct {
 	task     Task
 	Days     []time.Weekday
@@ -37,6 +39,7 @@ type scheduler struct {
 	done            chan struct{}
 }
 
+// NewScheduler creates and returns a new scheduler instance.
 func NewScheduler(db ScheduleDB, wp *workerpool, pollingInterval time.Duration) *scheduler {
 	return &scheduler{
 		db:              db,
@@ -46,12 +49,14 @@ func NewScheduler(db ScheduleDB, wp *workerpool, pollingInterval time.Duration) 
 	}
 }
 
+// NewScheduleMemDB creates and returns a new scheduleMemDB instance.
 func NewScheduleMemDB(db *sync.Map) *scheduleMemDB {
 	return &scheduleMemDB{
 		db: db,
 	}
 }
 
+// ScheduleRun schedules an once-off run for the task.
 func (s *scheduler) ScheduleRun(t Task, when time.Time) error {
 	today := time.Now().Weekday()
 	schedule := &Schedule{
@@ -63,6 +68,8 @@ func (s *scheduler) ScheduleRun(t Task, when time.Time) error {
 	return s.db.Store(t.Id(), schedule)
 }
 
+// Schedule schedules a task for periodic execution.
+// NOTE: Interval min value is set to 5 mins.
 func (s *scheduler) Schedule(t Task, given Schedule) error {
 	if err := s.validate(given); err != nil {
 		return err
@@ -78,6 +85,7 @@ func (s *scheduler) Schedule(t Task, given Schedule) error {
 
 }
 
+// Dispatch polls the databases for any due schedules and enqueues their tasks for execution.
 func (s *scheduler) Dispatch() {
 	ticker := time.NewTicker(s.pollingInterval)
 
@@ -116,6 +124,7 @@ func (s *scheduler) Dispatch() {
 	}()
 }
 
+// Stop stops the scheduler.
 func (s *scheduler) Stop() {
 	close(s.done)
 }
@@ -134,11 +143,13 @@ func (s *scheduler) validate(schedule Schedule) error {
 	return nil
 }
 
+// Store stores the schedule in the database.
 func (m *scheduleMemDB) Store(id string, s *Schedule) error {
 	m.db.Store(id, s)
 	return nil
 }
 
+// FetchDue fetches the due schedules from the database.
 func (m *scheduleMemDB) FetchDue(now time.Time) ([]*Schedule, error) {
 	var dueSchedules []*Schedule
 	m.db.Range(func(key, value any) bool {
