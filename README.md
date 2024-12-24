@@ -55,9 +55,9 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 * Context Awareness. Optionally include a context when running tasks.
 * Retry Policy. Define the number of retry attempts for each task.
 * Task Pipelines. Chain tasks to execute sequentially, with the option to pass the result of one task as the argument for the next.
-* Database Interface. Use the built-in in-memory database or implement custom drivers for other storage engines.
+* Database Interface. Use the built-in in-memory database or use custom drivers for other storage engines by implementing an one-func interface.
 * Task Metadata. Retrieve metadata such as status, creation time, execution time, and elapsed time. Metadata is also stored with the task results.
-* Scheduler: Schedule tasks to run at a specific timestamp or set up periodic execution.
+* Scheduler: Schedule tasks to run at a specific timestamp or set up periodic execution. Scheduler uses a built-in in-memory database for the schedule entities, but you can implement a simple interface to use your own drivers for other storage engines.
 
 ## test
 
