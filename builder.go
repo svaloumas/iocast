@@ -18,7 +18,6 @@ type taskBuilder[T any] struct {
 
 // TaskBuilder creates and returns a new TaskBuilder instance.
 func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
-	createdAt := time.Now().UTC()
 	t := &taskBuilder[T]{
 		id:         id,
 		taskFn:     fn,
@@ -26,7 +25,7 @@ func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
 		maxRetries: 1,
 		ctx:        context.Background(),
 		metadata: metadata{
-			CreatetAt: &createdAt,
+			CreatetAt: time.Now().UTC(),
 			Status:    STATUS_PENDING,
 		},
 	}
