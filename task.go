@@ -34,7 +34,7 @@ type metadata struct {
 type Result[T any] struct {
 	Out      T
 	Err      error
-	metadata metadata
+	Metadata metadata
 }
 
 type taskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
@@ -117,7 +117,7 @@ func (t *task[T]) Write() error {
 			return t.writer.Write(t.id, Result[any]{
 				Out:      result.Out,
 				Err:      result.Err,
-				metadata: result.metadata,
+				Metadata: result.Metadata,
 			})
 		case <-t.ctx.Done():
 			return t.ctx.Err()
@@ -154,7 +154,7 @@ func (t *task[T]) Exec() {
 		}
 		t.next = t.next.next
 	}
-	result.metadata = t.metadata
+	result.Metadata = t.metadata
 	t.resultChan <- result
 	close(t.resultChan)
 }
