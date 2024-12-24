@@ -21,6 +21,7 @@ type scheduleMemDB struct {
 	db *sync.Map
 }
 
+// Schedule is a task's schedule.
 type Schedule struct {
 	task  Task
 	RunAt time.Time

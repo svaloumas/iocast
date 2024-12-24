@@ -51,11 +51,13 @@ func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
 	return b
 }
 
+// Context passes a database implementation to the task builder.
 func (b *taskBuilder[T]) Database(db DB) *taskBuilder[T] {
 	b.db = db
 	return b
 }
 
+// Build initializes and returns a new task instance.
 func (b *taskBuilder[T]) Build() *task[T] {
 	return &task[T]{
 		id:         b.id,

@@ -38,6 +38,7 @@ func (p *pipeline[T]) Exec() {
 	p.head.Exec()
 }
 
+// Write stores the results of the pipeline (head's result) to the database.
 func (p *pipeline[T]) Write() error {
 	return p.head.Write()
 }
