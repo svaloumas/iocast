@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/svaloumas/iocast"
@@ -23,9 +22,7 @@ func main() {
 	t := iocast.TaskBuilder("uuid", taskFn).Build()
 
 	// create the scheduler
-	m := &sync.Map{}
-	db := iocast.NewScheduleMemDB(m)
-	s := iocast.NewScheduler(db, p, 100*time.Millisecond)
+	s := iocast.NewScheduler(p, 100*time.Millisecond)
 	defer s.Stop()
 
 	// run it
