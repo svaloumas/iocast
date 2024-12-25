@@ -53,7 +53,7 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 - [x] Generic Task Arguments. Pass any built-in or custom type as an argument to your tasks.
 - [x] Flexible Task Results. Return any type of value from your tasks.
 - [x] Context Awareness. Optionally include a context when running tasks.
-- [x] Retry Policy. Define the number of retry attempts for each task.
+- [x] Retry attemtps. Define the number of retry attempts for each task.
 - [x] Task Pipelines. Chain tasks to execute sequentially, with the option to pass the result of one task as the argument for the next.
 - [x] Database Interface. Use the built-in in-memory database or use custom drivers for other storage engines by implementing an one-func interface.
 - [x] Task Metadata. Retrieve metadata such as status, creation time, execution time, and elapsed time. Metadata is also stored with the task results.
