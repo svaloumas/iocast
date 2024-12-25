@@ -2,7 +2,7 @@
 
 A zero-dependency async task running library that aims to be simple, easy to use and flexible.
 
-## install
+## installation
 
 ```bash
 go get github.com/svaloumas/iocast
