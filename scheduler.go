@@ -11,14 +11,7 @@ var (
 	ErrScheduledRunInThePast = errors.New("cannot schedule run in the past: when < now")
 )
 
-// ScheduleDB represents the storage used for the Schedule entities.
-type ScheduleDB interface {
-	Store(string, *Schedule) error
-	FetchDue(time.Time) ([]*Schedule, error)
-	Delete(string) error
-}
-
-type scheduleMemDB struct {
+type scheduleDB struct {
 	db *sync.Map
 }
 
@@ -29,14 +22,14 @@ type Schedule struct {
 }
 
 type scheduler struct {
-	db              ScheduleDB
+	db              *scheduleDB
 	wp              *workerpool
 	pollingInterval time.Duration
 	done            chan struct{}
 }
 
 // NewScheduler creates and returns a new scheduler instance.
-func NewScheduler(db ScheduleDB, wp *workerpool, pollingInterval time.Duration) *scheduler {
+func NewScheduler(db *scheduleDB, wp *workerpool, pollingInterval time.Duration) *scheduler {
 	return &scheduler{
 		db:              db,
 		wp:              wp,
@@ -45,9 +38,9 @@ func NewScheduler(db ScheduleDB, wp *workerpool, pollingInterval time.Duration) 
 	}
 }
 
-// NewScheduleMemDB creates and returns a new scheduleMemDB instance.
-func NewScheduleMemDB(db *sync.Map) *scheduleMemDB {
-	return &scheduleMemDB{
+// NewScheduleDB creates and returns a new scheduleDB instance.
+func NewScheduleDB(db *sync.Map) *scheduleDB {
+	return &scheduleDB{
 		db: db,
 	}
 }
@@ -111,19 +104,19 @@ func (s *scheduler) validate(runAt time.Time) error {
 }
 
 // Store stores the schedule in the database.
-func (m *scheduleMemDB) Store(id string, s *Schedule) error {
+func (m *scheduleDB) Store(id string, s *Schedule) error {
 	m.db.Store(id, s)
 	return nil
 }
 
 // Delete removes a schedule from the database.
-func (m *scheduleMemDB) Delete(id string) error {
+func (m *scheduleDB) Delete(id string) error {
 	m.db.Delete(id)
 	return nil
 }
 
 // FetchDue fetches the due schedules from the database.
-func (m *scheduleMemDB) FetchDue(now time.Time) ([]*Schedule, error) {
+func (m *scheduleDB) FetchDue(now time.Time) ([]*Schedule, error) {
 	var dueSchedules []*Schedule
 	m.db.Range(func(key, value any) bool {
 		schedule, ok := value.(*Schedule)
