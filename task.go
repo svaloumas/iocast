@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	STATUS_PENDING = "PENDING"
-	STATUS_RUNNING = "RUNNING"
-	STATUS_FAILED  = "FAILED"
-	STATUS_SUCCESS = "SUCCESS"
+	StatusPending = "PENDING"
+	StatusRunning = "RUNNING"
+	StatusFailed  = "FAILED"
+	StatusSuccess = "SUCCESS"
 )
 
 // Task represents a task to be executed.
 type Task interface {
-	Id() string
+	ID() string
 	Exec()
 	Write() error
 	Metadata() metadata
@@ -25,17 +25,17 @@ type Task interface {
 type status string
 
 type metadata struct {
-	CreatetAt time.Time
-	StartedAt time.Time
-	Elapsed   time.Duration
-	Status    status
+	CreatetAt time.Time     `json:"created_at"`
+	StartedAt time.Time     `json:"started_at"`
+	Elapsed   time.Duration `json:"elapsed"`
+	Status    status        `json:"status"`
 }
 
 // Result is the output of a task's execution.
 type Result[T any] struct {
-	Out      T
-	Err      error
-	Metadata metadata
+	Out      T        `json:"out"`
+	Err      error    `json:"err"`
+	Metadata metadata `json:"metadata"`
 }
 
 type taskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
@@ -53,15 +53,19 @@ type task[T any] struct {
 }
 
 // NewTaskFunc initializes and returns a new task func.
-func NewTaskFunc[Arg, T any](args Arg, fn func(ctx context.Context, args Arg) (T, error)) taskFn[T] {
-	return func(ctx context.Context, previous Result[T]) Result[T] {
+func NewTaskFunc[Arg, T any](
+	args Arg,
+	fn func(ctx context.Context, args Arg) (T, error)) taskFn[T] {
+	return func(ctx context.Context, _ Result[T]) Result[T] {
 		out, err := fn(ctx, args)
 		return Result[T]{Out: out, Err: err}
 	}
 }
 
 // NewTaskFuncWithPreviousResult initializes and returns a new task func that can use the precious task's result.
-func NewTaskFuncWithPreviousResult[Arg, T any](args Arg, fn func(ctx context.Context, args Arg, previousResult Result[T]) (T, error)) taskFn[T] {
+func NewTaskFuncWithPreviousResult[Arg, T any](
+	args Arg,
+	fn func(ctx context.Context, args Arg, previousResult Result[T]) (T, error)) taskFn[T] {
 	return func(ctx context.Context, previous Result[T]) Result[T] {
 		out, err := fn(ctx, args, previous)
 		return Result[T]{Out: out, Err: err}
@@ -76,28 +80,28 @@ func (t *task[T]) markRunning() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.metadata.StartedAt = time.Now().UTC()
-	t.metadata.Status = STATUS_RUNNING
+	t.metadata.Status = StatusRunning
 }
 
 func (t *task[T]) markFailed() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
-	t.metadata.Status = STATUS_FAILED
+	t.metadata.Status = StatusFailed
 }
 
 func (t *task[T]) markSuccess() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
-	t.metadata.Status = STATUS_SUCCESS
+	t.metadata.Status = StatusSuccess
 }
 
 func (t *task[T]) retry(previous Result[T]) Result[T] {
 	var result Result[T]
 
 	t.markRunning()
-	for i := 0; i < t.maxRetries; i++ {
+	for _ = range t.maxRetries {
 		result = t.taskFn(t.ctx, previous)
 		if result.Err == nil {
 			t.markSuccess()
@@ -112,8 +116,8 @@ func (t *task[T]) Wait() <-chan Result[T] {
 	return t.resultChan
 }
 
-// Id is an ID geter.
-func (t *task[T]) Id() string {
+// ID is an ID geter.
+func (t *task[T]) ID() string {
 	return t.id
 }
 
@@ -136,7 +140,7 @@ func (t *task[T]) Write() error {
 
 // Exec executes the task.
 func (t *task[T]) Exec() {
-	var idx int = 1
+	idx := 1
 	var result Result[T]
 
 	result = t.retry(result)

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func testTaskPipedFn(ctx context.Context, args string, previous Result[string]) (string, error) {
+func testTaskPipedFn(_ context.Context, args string, previous Result[string]) (string, error) {
 	return args + previous.Out, nil
 }
 
@@ -45,9 +45,7 @@ func TestPipelineWithLessThanTwoTasks(t *testing.T) {
 	expectedMsg := "at least two tasks must be linked to create a pipeline"
 	if err == nil {
 		t.Errorf("NewPipeline did not return expected error: got nil want %v", expectedMsg)
-	} else {
-		if err.Error() != expectedMsg {
-			t.Errorf("NewPipeline returned unexpected error: got %v want %v", err.Error(), expectedMsg)
-		}
+	} else if err.Error() != expectedMsg {
+		t.Errorf("NewPipeline returned unexpected error: got %v want %v", err.Error(), expectedMsg)
 	}
 }

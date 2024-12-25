@@ -33,7 +33,7 @@ func (p workerpool) Enqueue(t Task) bool {
 
 // Start starts the worker pool pattern.
 func (p workerpool) Start(ctx context.Context) {
-	for i := 0; i < p.workers; i++ {
+	for _ = range p.workers {
 		p.wg.Add(1)
 		go func() {
 			defer p.wg.Done()
@@ -46,7 +46,7 @@ func (p workerpool) Start(ctx context.Context) {
 					go func() {
 						err := t.Write()
 						if err != nil {
-							log.Printf("error writing the result of task %s: %v", t.Id(), err)
+							log.Printf("error writing the result of task %s: %v", t.ID(), err)
 						}
 					}()
 					t.Exec()

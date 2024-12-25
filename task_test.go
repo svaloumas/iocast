@@ -10,11 +10,11 @@ var (
 	retries = 0
 )
 
-func testTaskFn(ctx context.Context, args string) (string, error) {
+func testTaskFn(_ context.Context, args string) (string, error) {
 	return args, nil
 }
 
-func testTaskFnWithContext(ctx context.Context, args string) (string, error) {
+func testTaskFnWithContext(ctx context.Context, _ string) (string, error) {
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
@@ -23,7 +23,7 @@ func testTaskFnWithContext(ctx context.Context, args string) (string, error) {
 	}
 }
 
-func testFailingTaskFn(ctx context.Context, args string) (string, error) {
+func testFailingTaskFn(_ context.Context, _ string) (string, error) {
 	retries++
 	return "", errors.New("something went wrong")
 }

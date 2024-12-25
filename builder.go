@@ -26,7 +26,7 @@ func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
 		ctx:        context.Background(),
 		metadata: metadata{
 			CreatetAt: time.Now().UTC(),
-			Status:    STATUS_PENDING,
+			Status:    StatusPending,
 		},
 	}
 	return t

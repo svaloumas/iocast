@@ -49,7 +49,7 @@ func (s *scheduler) Schedule(t Task, runAt time.Time) error {
 		task:  t,
 		RunAt: runAt,
 	}
-	return s.db.Store(t.Id(), schedule)
+	return s.db.Store(t.ID(), schedule)
 }
 
 // Dispatch polls the databases for any due schedules and enqueues their tasks for execution.
@@ -60,30 +60,34 @@ func (s *scheduler) Dispatch() {
 		for {
 			select {
 			case <-ticker.C:
-				now := time.Now()
-				schedules, err := s.db.FetchDue(now)
-				if err != nil {
-					log.Printf("failed to fetch due schedules: %v", err)
-					continue
-				}
-
-				for _, schedule := range schedules {
-					ok := s.wp.Enqueue(schedule.task)
-					if !ok {
-						log.Printf("failed to enqueue task with id: %s", schedule.task.Id())
-					}
-					err := s.db.Delete(schedule.task.Id())
-					if err != nil {
-						log.Printf("failed to delete due schedule: %v", err)
-						continue
-					}
-				}
+				s.dispatchDueTasks()
 			case <-s.done:
 				ticker.Stop()
 				return
 			}
 		}
 	}()
+}
+
+func (s *scheduler) dispatchDueTasks() {
+	schedules, err := s.db.FetchDue(time.Now())
+	if err != nil {
+		log.Printf("failed to fetch due schedules: %v", err)
+		return
+	}
+
+	for _, schedule := range schedules {
+		ok := s.wp.Enqueue(schedule.task)
+		if !ok {
+			log.Printf("failed to enqueue task with id: %s", schedule.task.ID())
+			return
+		}
+		err = s.db.Delete(schedule.task.ID())
+		if err != nil {
+			log.Printf("failed to delete due schedule: %v", err)
+			return
+		}
+	}
 }
 
 // Stop stops the scheduler.
@@ -113,7 +117,7 @@ func (m *scheduleDB) Delete(id string) error {
 // FetchDue fetches the due schedules from the database.
 func (m *scheduleDB) FetchDue(now time.Time) ([]*Schedule, error) {
 	var dueSchedules []*Schedule
-	m.db.Range(func(key, value any) bool {
+	m.db.Range(func(_, value any) bool {
 		schedule, ok := value.(*Schedule)
 		if !ok {
 			return true // skip

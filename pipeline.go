@@ -4,6 +4,10 @@ import (
 	"errors"
 )
 
+const (
+	minTasksNum = 2
+)
+
 type pipeline[T any] struct {
 	id         string
 	head       *task[T]
@@ -12,7 +16,7 @@ type pipeline[T any] struct {
 
 // NewPipeline links tasks together to execute them in order, returns a pipeline instance.
 func NewPipeline[T any](id string, tasks ...*task[T]) (*pipeline[T], error) {
-	if len(tasks) < 2 {
+	if len(tasks) < minTasksNum {
 		return nil, errors.New("at least two tasks must be linked to create a pipeline")
 	}
 	head := tasks[0]
@@ -43,8 +47,8 @@ func (p *pipeline[T]) Write() error {
 	return p.head.Write()
 }
 
-// Id is an ID geter.
-func (p *pipeline[T]) Id() string {
+// ID is an ID geter.
+func (p *pipeline[T]) ID() string {
 	return p.id
 }
 
