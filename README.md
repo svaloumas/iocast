@@ -1,12 +1,12 @@
 <div align="center">
-# iocast
-
-A zero-dependency async task running library that aims to be simple, easy to use and flexible.
+<h1>iocast</h1>
+<p>A zero-dependency async task running library that aims to be simple, easy to use and flexible.</p>
 </div>
-<div align="center">
 
+<div align="center">
 <img src="./logo/iocast.png">
 </div>
+
 <div align="center">
 
 [![stars](https://img.shields.io/github/stars/svaloumas/iocast?style=social)](https://github.com/svaloumas/iocast/stargazers)
