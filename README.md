@@ -5,7 +5,7 @@ A zero-dependency async task running library that aims to be simple, easy to use
 </div>
 <div align="center">
 
-<img src="./logo/iocast-logo.png">
+<img src="./logo/iocast.png">
 </div>
 <div align="center">
 
