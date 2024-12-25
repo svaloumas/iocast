@@ -1,6 +1,19 @@
+<div align="center">
 # iocast
 
 A zero-dependency async task running library that aims to be simple, easy to use and flexible.
+</div>
+<div align="center">
+
+<img src="./logo/iocast-logo.png">
+</div>
+<div align="center">
+
+[![stars](https://img.shields.io/github/stars/svaloumas/iocast?style=social)](https://github.com/svaloumas/iocast/stargazers)
+[![forks](https://img.shields.io/github/forks/svaloumas/iocast?style=social)](https://github.com/svaloumas/iocast/network/members)
+[![issues](https://img.shields.io/github/issues/svaloumas/iocast?style=social&logo=github)](https://github.com/svaloumas/iocast/issues?q=is%3Aissue+is%3Aopen+)
+[![go_reportcard](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=social&logo=github)](https://goreportcard.com/report/github.com/svaloumas/iocast)
+</div>
 
 ## installation
 
