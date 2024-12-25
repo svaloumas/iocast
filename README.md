@@ -5,7 +5,7 @@ A zero-dependency async task running library that aims to be simple, easy to use
 ## install
 
 ```bash
-go get github.com/svaloumas/iocast@v0.1.0
+go get github.com/svaloumas/iocast
 ```
 
 ## usage

@@ -29,19 +29,14 @@ type scheduler struct {
 }
 
 // NewScheduler creates and returns a new scheduler instance.
-func NewScheduler(db *scheduleDB, wp *workerpool, pollingInterval time.Duration) *scheduler {
+func NewScheduler(wp *workerpool, pollingInterval time.Duration) *scheduler {
 	return &scheduler{
-		db:              db,
+		db: &scheduleDB{
+			db: &sync.Map{},
+		},
 		wp:              wp,
 		pollingInterval: pollingInterval,
 		done:            make(chan struct{}),
-	}
-}
-
-// NewScheduleDB creates and returns a new scheduleDB instance.
-func NewScheduleDB(db *sync.Map) *scheduleDB {
-	return &scheduleDB{
-		db: db,
 	}
 }
 

@@ -3,7 +3,6 @@ package iocast
 import (
 	"context"
 	"log"
-	"sync"
 	"testing"
 	"time"
 )
@@ -17,9 +16,7 @@ func TestScheduler(t *testing.T) {
 
 	task := TaskBuilder("uuid", taskFn).Build()
 
-	m := &sync.Map{}
-	db := NewScheduleDB(m)
-	s := NewScheduler(db, p, 50*time.Millisecond)
+	s := NewScheduler(p, 50*time.Millisecond)
 	defer s.Stop()
 
 	s.Dispatch()
