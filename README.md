@@ -42,9 +42,10 @@ func DownloadContent(ctx context.Context, args *Args) (string, error) {
 }
 
 func main() {
-	q := iocast.NewWorkerPool(4, 8)
-	q.Start(context.Background())
-	defer q.Stop()
+	numOfWorkers := runtime.NumCPU()
+	p := iocast.NewWorkerPool(numOfWorkers, numOfWorkers*2)
+	p.Start(context.Background())
+	defer p.Stop()
 
 	args := &Args{addr: "http://somewhere.net", id: 1}
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
@@ -71,6 +72,7 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 - [x] Database Interface. Use the built-in in-memory database or use custom drivers for other storage engines by implementing an one-func interface.
 - [x] Task Metadata. Retrieve metadata such as status, creation time, execution time, and elapsed time. Metadata is also stored with the task results.
 - [x] Scheduler: Schedule tasks to run at a specific timestamp.
+- [ ] Scheduler: Add support for periodic tasks.
 
 ## test
 

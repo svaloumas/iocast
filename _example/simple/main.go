@@ -9,9 +9,9 @@ import (
 
 func main() {
 	// create the worker pool
-	q := iocast.NewWorkerPool(4, 8)
-	q.Start(context.Background())
-	defer q.Stop()
+	p := iocast.NewWorkerPool(4, 8)
+	p.Start(context.Background())
+	defer p.Stop()
 
 	// create a task func
 	args := &Args{addr: "http://somewhere.net", id: 1}
