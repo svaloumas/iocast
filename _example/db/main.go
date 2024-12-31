@@ -17,7 +17,7 @@ func main() {
 
 	// create a task func
 	args := &Args{addr: "http://somewhere.net", id: 1}
-	taskFn := iocast.NewTaskFunc(args, DownloadContent)
+	taskFn := iocast.NewTaskFunc(context.Background(), args, DownloadContent)
 
 	// create a wrapper task
 	m := &sync.Map{}

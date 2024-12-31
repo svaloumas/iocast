@@ -9,24 +9,24 @@ import (
 
 func main() {
 	// create the worker pool
-	p := iocast.NewWorkerPool(4, 8)
-	p.Start(context.Background())
-	defer p.Stop()
+	q := iocast.NewWorkerPool(4, 8)
+	q.Start(context.Background())
+	defer q.Stop()
 
 	// create the task funcs
 	downloadArgs := &DownloadArgs{addr: "http://somewhere.net", id: 1}
-	downloadFn := iocast.NewTaskFunc(downloadArgs, DownloadContent)
+	downloadFn := iocast.NewTaskFunc(context.Background(), downloadArgs, DownloadContent)
 
 	processArgs := &ProcessArgs{mode: "MODE_1"}
-	processFn := iocast.NewTaskFuncWithPreviousResult(processArgs, ProcessContent)
+	processFn := iocast.NewTaskFuncWithPreviousResult(context.Background(), processArgs, ProcessContent)
 
 	uploadArgs := &UploadArgs{addr: "http://storage.net/path/to/file"}
-	uploadFn := iocast.NewTaskFuncWithPreviousResult(uploadArgs, UploadContent)
+	uploadFn := iocast.NewTaskFuncWithPreviousResult(context.Background(), uploadArgs, UploadContent)
 
 	// create the wrapper tasks
-	downloadTask := iocast.TaskBuilder("download", downloadFn).Context(context.Background()).MaxRetries(5).Build()
-	processTask := iocast.TaskBuilder("process", processFn).Context(context.Background()).MaxRetries(4).Build()
-	uploadTask := iocast.TaskBuilder("upload", uploadFn).Context(context.Background()).MaxRetries(3).Build()
+	downloadTask := iocast.TaskBuilder("download", downloadFn).MaxRetries(5).Build()
+	processTask := iocast.TaskBuilder("process", processFn).MaxRetries(4).Build()
+	uploadTask := iocast.TaskBuilder("upload", uploadFn).MaxRetries(3).Build()
 
 	// create the pipeline
 	p, err := iocast.NewPipeline("some id", downloadTask, processTask, uploadTask)

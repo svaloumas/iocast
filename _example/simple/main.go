@@ -15,10 +15,10 @@ func main() {
 
 	// create a task func
 	args := &Args{addr: "http://somewhere.net", id: 1}
-	taskFn := iocast.NewTaskFunc(args, DownloadContent)
+	taskFn := iocast.NewTaskFunc(context.Background(), args, DownloadContent)
 
 	// create a wrapper task
-	t := iocast.TaskBuilder("uuid", taskFn).Context(context.Background()).MaxRetries(3).Build()
+	t := iocast.TaskBuilder("uuid", taskFn).MaxRetries(3).Build()
 
 	// enqueue the task
 	ok := p.Enqueue(t)
