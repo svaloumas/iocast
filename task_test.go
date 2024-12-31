@@ -47,7 +47,7 @@ func TestTask(t *testing.T) {
 	tests := []struct {
 		name     string
 		expected string
-		task     Task
+		job      Job
 	}{
 		{
 			"simple task",
@@ -68,7 +68,7 @@ func TestTask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.task.Exec()
+			tt.job.Exec()
 
 			switch tt.name {
 			case "simple task":

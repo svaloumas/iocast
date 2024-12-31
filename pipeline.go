@@ -8,14 +8,14 @@ const (
 	minTasksNum = 2
 )
 
-type pipeline[T any] struct {
+type Pipeline[T any] struct {
 	id         string
-	head       *task[T]
+	head       *Task[T]
 	resultChan chan Result[T]
 }
 
 // NewPipeline links tasks together to execute them in order, returns a pipeline instance.
-func NewPipeline[T any](id string, tasks ...*task[T]) (*pipeline[T], error) {
+func NewPipeline[T any](id string, tasks ...*Task[T]) (*Pipeline[T], error) {
 	if len(tasks) < minTasksNum {
 		return nil, errors.New("at least two tasks must be linked to create a pipeline")
 	}
@@ -25,7 +25,7 @@ func NewPipeline[T any](id string, tasks ...*task[T]) (*pipeline[T], error) {
 			t.link(tasks[i+1])
 		}
 	}
-	return &pipeline[T]{
+	return &Pipeline[T]{
 		id:         id,
 		head:       head,
 		resultChan: head.resultChan,
@@ -33,27 +33,27 @@ func NewPipeline[T any](id string, tasks ...*task[T]) (*pipeline[T], error) {
 }
 
 // Wait awaits for the final result of the pipeline (last task in the order).
-func (p *pipeline[T]) Wait() <-chan Result[T] {
+func (p *Pipeline[T]) Wait() <-chan Result[T] {
 	return p.head.resultChan
 }
 
 // Exec executes the linked tasks of the pipeline.
-func (p *pipeline[T]) Exec() {
+func (p *Pipeline[T]) Exec() {
 	p.head.Exec()
 }
 
 // Write stores the results of the pipeline (head's result) to the database.
-func (p *pipeline[T]) Write() error {
+func (p *Pipeline[T]) Write() error {
 	return p.head.Write()
 }
 
 // ID is an ID geter.
-func (p *pipeline[T]) ID() string {
+func (p *Pipeline[T]) ID() string {
 	return p.id
 }
 
 // Metadata is a metadata getter.
-func (p *pipeline[T]) Metadata() metadata {
+func (p *Pipeline[T]) Metadata() Metadata {
 	p.head.mu.Lock()
 	defer p.head.mu.Unlock()
 	return p.head.metadata

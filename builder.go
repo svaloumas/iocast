@@ -8,23 +8,23 @@ import (
 type taskBuilder[T any] struct {
 	id         string
 	ctx        context.Context
-	taskFn     taskFn[T]
+	taskFn     TaskFn[T]
 	resultChan chan Result[T]
-	next       *task[T]
+	next       *Task[T]
 	maxRetries int
 	db         DB
-	metadata   metadata
+	metadata   Metadata
 }
 
 // TaskBuilder creates and returns a new TaskBuilder instance.
-func TaskBuilder[T any](id string, fn taskFn[T]) *taskBuilder[T] {
+func TaskBuilder[T any](id string, fn TaskFn[T]) *taskBuilder[T] {
 	t := &taskBuilder[T]{
 		id:         id,
 		taskFn:     fn,
 		resultChan: make(chan Result[T], 1),
 		maxRetries: 1,
 		ctx:        context.Background(),
-		metadata: metadata{
+		metadata: Metadata{
 			CreatetAt: time.Now().UTC(),
 			Status:    StatusPending,
 		},
@@ -58,8 +58,8 @@ func (b *taskBuilder[T]) Database(db DB) *taskBuilder[T] {
 }
 
 // Build initializes and returns a new task instance.
-func (b *taskBuilder[T]) Build() *task[T] {
-	return &task[T]{
+func (b *taskBuilder[T]) Build() *Task[T] {
+	return &Task[T]{
 		id:         b.id,
 		ctx:        b.ctx,
 		taskFn:     b.taskFn,

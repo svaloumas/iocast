@@ -22,7 +22,7 @@ func TestWorkerPool(t *testing.T) {
 	tests := []struct {
 		name     string
 		expected string
-		p        *workerpool
+		p        *WorkerPool
 	}{
 		{
 			"ok",

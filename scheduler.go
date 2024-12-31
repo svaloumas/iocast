@@ -11,27 +11,27 @@ var (
 	ErrScheduledRunInThePast = errors.New("cannot schedule run in the past: when < now")
 )
 
-type scheduleDB struct {
+type ScheduleDB struct {
 	db *sync.Map
 }
 
 // Schedule is a task's schedule.
 type Schedule struct {
-	task  Task
+	job   Job
 	RunAt time.Time
 }
 
-type scheduler struct {
-	db              *scheduleDB
-	wp              *workerpool
+type Scheduler struct {
+	db              *ScheduleDB
+	wp              *WorkerPool
 	pollingInterval time.Duration
 	done            chan struct{}
 }
 
 // NewScheduler creates and returns a new scheduler instance.
-func NewScheduler(wp *workerpool, pollingInterval time.Duration) *scheduler {
-	return &scheduler{
-		db: &scheduleDB{
+func NewScheduler(wp *WorkerPool, pollingInterval time.Duration) *Scheduler {
+	return &Scheduler{
+		db: &ScheduleDB{
 			db: &sync.Map{},
 		},
 		wp:              wp,
@@ -41,19 +41,19 @@ func NewScheduler(wp *workerpool, pollingInterval time.Duration) *scheduler {
 }
 
 // ScheduleRun schedules a run for the task.
-func (s *scheduler) Schedule(t Task, runAt time.Time) error {
+func (s *Scheduler) Schedule(j Job, runAt time.Time) error {
 	if err := s.validate(runAt); err != nil {
 		return err
 	}
 	schedule := &Schedule{
-		task:  t,
+		job:   j,
 		RunAt: runAt,
 	}
-	return s.db.Store(t.ID(), schedule)
+	return s.db.Store(j.ID(), schedule)
 }
 
 // Dispatch polls the databases for any due schedules and enqueues their tasks for execution.
-func (s *scheduler) Dispatch() {
+func (s *Scheduler) Dispatch() {
 	ticker := time.NewTicker(s.pollingInterval)
 
 	go func() {
@@ -69,7 +69,7 @@ func (s *scheduler) Dispatch() {
 	}()
 }
 
-func (s *scheduler) dispatchDueTasks() {
+func (s *Scheduler) dispatchDueTasks() {
 	schedules, err := s.db.FetchDue(time.Now())
 	if err != nil {
 		log.Printf("failed to fetch due schedules: %v", err)
@@ -77,12 +77,12 @@ func (s *scheduler) dispatchDueTasks() {
 	}
 
 	for _, schedule := range schedules {
-		ok := s.wp.Enqueue(schedule.task)
+		ok := s.wp.Enqueue(schedule.job)
 		if !ok {
-			log.Printf("failed to enqueue task with id: %s", schedule.task.ID())
+			log.Printf("failed to enqueue task with id: %s", schedule.job.ID())
 			return
 		}
-		err = s.db.Delete(schedule.task.ID())
+		err = s.db.Delete(schedule.job.ID())
 		if err != nil {
 			log.Printf("failed to delete due schedule: %v", err)
 			return
@@ -91,11 +91,11 @@ func (s *scheduler) dispatchDueTasks() {
 }
 
 // Stop stops the scheduler.
-func (s *scheduler) Stop() {
+func (s *Scheduler) Stop() {
 	close(s.done)
 }
 
-func (s *scheduler) validate(runAt time.Time) error {
+func (s *Scheduler) validate(runAt time.Time) error {
 	if runAt.Before(time.Now()) {
 		return ErrScheduledRunInThePast
 	}
@@ -103,19 +103,19 @@ func (s *scheduler) validate(runAt time.Time) error {
 }
 
 // Store stores the schedule in the database.
-func (m *scheduleDB) Store(id string, s *Schedule) error {
+func (m *ScheduleDB) Store(id string, s *Schedule) error {
 	m.db.Store(id, s)
 	return nil
 }
 
 // Delete removes a schedule from the database.
-func (m *scheduleDB) Delete(id string) error {
+func (m *ScheduleDB) Delete(id string) error {
 	m.db.Delete(id)
 	return nil
 }
 
 // FetchDue fetches the due schedules from the database.
-func (m *scheduleDB) FetchDue(now time.Time) ([]*Schedule, error) {
+func (m *ScheduleDB) FetchDue(now time.Time) ([]*Schedule, error) {
 	var dueSchedules []*Schedule
 	m.db.Range(func(_, value any) bool {
 		schedule, ok := value.(*Schedule)
