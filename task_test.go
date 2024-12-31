@@ -14,15 +14,6 @@ func testTaskFn(_ context.Context, args string) (string, error) {
 	return args, nil
 }
 
-func testTaskFnWithContext(ctx context.Context, _ string) (string, error) {
-	select {
-	case <-ctx.Done():
-		return "", ctx.Err()
-	default:
-		return "meant to be cancelled", nil
-	}
-}
-
 func testFailingTaskFn(_ context.Context, _ string) (string, error) {
 	retries++
 	return "", errors.New("something went wrong")

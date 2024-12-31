@@ -6,8 +6,6 @@ import (
 )
 
 func TestTaskBuilder(t *testing.T) {
-	type key struct{}
-
 	args := "test"
 
 	taskFn := NewTaskFunc(context.Background(), args, testTaskFn)

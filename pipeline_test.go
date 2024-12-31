@@ -23,7 +23,7 @@ func TestPipeline(t *testing.T) {
 		t.Errorf("NewPipeline returned unexpected error: %v", err)
 	}
 
-	go p.Exec(context.Background())
+	go p.Exec()
 
 	result := <-p.Wait()
 	if result.Err != nil {
