@@ -23,7 +23,7 @@ func TaskBuilder[T any](id string, fn TaskFn[T]) *taskBuilder[T] {
 		maxRetries: 1,
 		metadata: Metadata{
 			CreatetAt: time.Now().UTC(),
-			Status:    StatusPending,
+			Status:    TaskStatusPending,
 		},
 	}
 	return t

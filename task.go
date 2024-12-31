@@ -7,11 +7,19 @@ import (
 	"time"
 )
 
-const (
-	StatusPending = "PENDING"
-	StatusRunning = "RUNNING"
-	StatusFailed  = "FAILED"
-	StatusSuccess = "SUCCESS"
+type status interface {
+	status()
+}
+
+type taskStatus string
+
+func (taskStatus) status() {}
+
+var (
+	TaskStatusPending = taskStatus("PENDING")
+	TaskStatusRunning = taskStatus("RUNNING")
+	TaskStatusFailed  = taskStatus("FAILED")
+	TaskStatusSuccess = taskStatus("SUCCESS")
 )
 
 // Job represents a task to be executed.
@@ -21,8 +29,6 @@ type Job interface {
 	Write() error
 	Metadata() Metadata
 }
-
-type status string
 
 type Metadata struct {
 	CreatetAt time.Time     `json:"created_at"`
@@ -81,21 +87,21 @@ func (t *Task[T]) markRunning() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.metadata.StartedAt = time.Now().UTC()
-	t.metadata.Status = StatusRunning
+	t.metadata.Status = TaskStatusRunning
 }
 
 func (t *Task[T]) markFailed() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
-	t.metadata.Status = StatusFailed
+	t.metadata.Status = TaskStatusFailed
 }
 
 func (t *Task[T]) markSuccess() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.metadata.Elapsed = time.Since(t.metadata.StartedAt)
-	t.metadata.Status = StatusSuccess
+	t.metadata.Status = TaskStatusSuccess
 }
 
 func (t *Task[T]) retry(previous Result[T]) Result[T] {
