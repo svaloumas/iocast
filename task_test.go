@@ -31,17 +31,10 @@ func testFailingTaskFn(_ context.Context, _ string) (string, error) {
 func TestTask(t *testing.T) {
 	args := "test"
 
-	taskFn := NewTaskFunc(args, testTaskFn)
+	taskFn := NewTaskFunc(context.Background(), args, testTaskFn)
 	task := TaskBuilder("simple", taskFn).Build()
 
-	taskFnWithContext := NewTaskFunc(args, testTaskFnWithContext)
-	ctx, cancel := context.WithCancel(context.Background())
-
-	cancel()
-
-	taskWithContext := TaskBuilder("context", taskFnWithContext).Context(ctx).Build()
-
-	taskFnWithRetries := NewTaskFunc(args, testFailingTaskFn)
+	taskFnWithRetries := NewTaskFunc(context.Background(), args, testFailingTaskFn)
 	taskWithRetries := TaskBuilder("retries", taskFnWithRetries).MaxRetries(3).Build()
 
 	tests := []struct {
@@ -53,11 +46,6 @@ func TestTask(t *testing.T) {
 			"simple task",
 			args,
 			task,
-		},
-		{
-			"task with context",
-			args,
-			taskWithContext,
 		},
 		{
 			"task with retries",
@@ -75,11 +63,6 @@ func TestTask(t *testing.T) {
 				result := <-task.Wait()
 				if result.Out != args {
 					t.Errorf("Exec returned unexpected result output: got %v want %v", result.Out, args)
-				}
-			case "task with context":
-				result := <-taskWithContext.Wait()
-				if result.Err.Error() != ctx.Err().Error() {
-					t.Errorf("Exec returned unexpected result error: got %v want %v", result.Err.Error(), ctx.Err().Error())
 				}
 			case "task with retries":
 				result := <-taskWithRetries.Wait()

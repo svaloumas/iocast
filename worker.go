@@ -39,17 +39,17 @@ func (p WorkerPool) Start(ctx context.Context) {
 			defer p.wg.Done()
 			for {
 				select {
-				case t, ok := <-p.queue:
+				case j, ok := <-p.queue:
 					if !ok {
 						return
 					}
 					go func() {
-						err := t.Write()
+						err := j.Write()
 						if err != nil {
-							log.Printf("error writing the result of task %s: %v", t.ID(), err)
+							log.Printf("error writing the result of task %s: %v", j.ID(), err)
 						}
 					}()
-					t.Exec()
+					j.Exec()
 				case <-ctx.Done():
 					return
 				}

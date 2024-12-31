@@ -15,7 +15,7 @@ func TestWorkerPool(t *testing.T) {
 	defer p2.Stop()
 
 	args := "test"
-	taskFn := NewTaskFunc(args, testTaskFn)
+	taskFn := NewTaskFunc(context.Background(), args, testTaskFn)
 	task := TaskBuilder("ok", taskFn).Build()
 	task2 := TaskBuilder("full queue", taskFn).Build()
 

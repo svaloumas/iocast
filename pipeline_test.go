@@ -12,10 +12,10 @@ func testTaskPipedFn(_ context.Context, args string, previous Result[string]) (s
 func TestPipeline(t *testing.T) {
 	args := "test"
 
-	taskFn := NewTaskFunc(args, testTaskFn)
+	taskFn := NewTaskFunc(context.Background(), args, testTaskFn)
 	task := TaskBuilder("head", taskFn).Build()
 
-	taskPipedFn := NewTaskFuncWithPreviousResult(args, testTaskPipedFn)
+	taskPipedFn := NewTaskFuncWithPreviousResult(context.Background(), args, testTaskPipedFn)
 	pipedTask := TaskBuilder("second", taskPipedFn).Build()
 
 	p, err := NewPipeline("id", task, pipedTask)
@@ -23,7 +23,7 @@ func TestPipeline(t *testing.T) {
 		t.Errorf("NewPipeline returned unexpected error: %v", err)
 	}
 
-	go p.Exec()
+	go p.Exec(context.Background())
 
 	result := <-p.Wait()
 	if result.Err != nil {
@@ -38,7 +38,7 @@ func TestPipeline(t *testing.T) {
 func TestPipelineWithLessThanTwoTasks(t *testing.T) {
 	args := "test"
 
-	taskFn := NewTaskFunc(args, testTaskFn)
+	taskFn := NewTaskFunc(context.Background(), args, testTaskFn)
 	task := TaskBuilder("head", taskFn).Build()
 
 	_, err := NewPipeline("id", task)

@@ -38,12 +38,11 @@ type Result[T any] struct {
 	Metadata Metadata `json:"metadata"`
 }
 
-type TaskFn[T any] func(ctx context.Context, previousResult Result[T]) Result[T]
+type TaskFn[T any] func(previousResult Result[T]) Result[T]
 
 type Task[T any] struct {
 	mu         sync.RWMutex
 	id         string
-	ctx        context.Context
 	taskFn     TaskFn[T]
 	resultChan chan Result[T]
 	next       *Task[T]
@@ -54,9 +53,10 @@ type Task[T any] struct {
 
 // NewTaskFunc initializes and returns a new task func.
 func NewTaskFunc[Arg, T any](
+	ctx context.Context,
 	args Arg,
 	fn func(ctx context.Context, args Arg) (T, error)) TaskFn[T] {
-	return func(ctx context.Context, _ Result[T]) Result[T] {
+	return func(_ Result[T]) Result[T] {
 		out, err := fn(ctx, args)
 		return Result[T]{Out: out, Err: err}
 	}
@@ -64,9 +64,10 @@ func NewTaskFunc[Arg, T any](
 
 // NewTaskFuncWithPreviousResult initializes and returns a new task func that can use the precious task's result.
 func NewTaskFuncWithPreviousResult[Arg, T any](
+	ctx context.Context,
 	args Arg,
 	fn func(ctx context.Context, args Arg, previousResult Result[T]) (T, error)) TaskFn[T] {
-	return func(ctx context.Context, previous Result[T]) Result[T] {
+	return func(previous Result[T]) Result[T] {
 		out, err := fn(ctx, args, previous)
 		return Result[T]{Out: out, Err: err}
 	}
@@ -102,7 +103,7 @@ func (t *Task[T]) retry(previous Result[T]) Result[T] {
 
 	t.markRunning()
 	for _ = range t.maxRetries {
-		result = t.taskFn(t.ctx, previous)
+		result = t.taskFn(previous)
 		if result.Err == nil {
 			t.markSuccess()
 			break
@@ -124,16 +125,15 @@ func (t *Task[T]) ID() string {
 // Wait blocks on the result channel if there's a writer and writes the result when ready.
 func (t *Task[T]) Write() error {
 	if t.db != nil {
-		select {
-		case result := <-t.resultChan:
-			return t.db.Write(t.id, Result[any]{
-				Out:      result.Out,
-				Err:      result.Err,
-				Metadata: result.Metadata,
-			})
-		case <-t.ctx.Done():
-			return t.ctx.Err()
+		result, ok := <-t.resultChan
+		if !ok {
+			return nil
 		}
+		return t.db.Write(t.id, Result[any]{
+			Out:      result.Out,
+			Err:      result.Err,
+			Metadata: result.Metadata,
+		})
 	}
 	return nil
 }

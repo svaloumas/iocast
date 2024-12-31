@@ -12,7 +12,7 @@ func TestScheduler(t *testing.T) {
 	p.Start(context.Background())
 	defer p.Stop()
 
-	taskFn := NewTaskFunc("args", testTaskFn)
+	taskFn := NewTaskFunc(context.Background(), "args", testTaskFn)
 
 	task := TaskBuilder("uuid", taskFn).Build()
 

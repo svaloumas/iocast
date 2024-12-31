@@ -21,7 +21,7 @@ func main() {
 	t := iocast.TaskBuilder("uuid", taskFn).Context(context.Background()).MaxRetries(3).Build()
 
 	// enqueue the task
-	ok := q.Enqueue(t)
+	ok := p.Enqueue(t)
 	if !ok {
 		log.Fatal("queue is full")
 	}

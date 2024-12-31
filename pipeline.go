@@ -1,6 +1,7 @@
 package iocast
 
 import (
+	"context"
 	"errors"
 )
 
@@ -38,12 +39,12 @@ func (p *Pipeline[T]) Wait() <-chan Result[T] {
 }
 
 // Exec executes the linked tasks of the pipeline.
-func (p *Pipeline[T]) Exec() {
+func (p *Pipeline[T]) Exec(ctx context.Context) {
 	p.head.Exec()
 }
 
 // Write stores the results of the pipeline (head's result) to the database.
-func (p *Pipeline[T]) Write() error {
+func (p *Pipeline[T]) Write(ctx context.Context) error {
 	return p.head.Write()
 }
 
