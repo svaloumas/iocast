@@ -51,7 +51,7 @@ func main() {
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
 	t := iocast.TaskBuilder(taskFn).Context(context.Background()).MaxRetries(3).Build()
-	q.Enqueue(t)
+	p.Enqueue(t)
 
 	m := t.Metadata()
 	log.Printf("status: %s", m.Status)
