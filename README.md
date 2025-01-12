@@ -51,10 +51,10 @@ func main() {
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
 	t := iocast.TaskBuilder(taskFn).
-			Context(context.Background()).
-			MaxRetries(3).
-			BackOff([]time.Duration{2*time.Second, 5*time.Second}).
-			Build()
+		Context(context.Background()).
+		MaxRetries(3).
+		BackOff([]time.Duration{2*time.Second, 5*time.Second}).
+		Build()
 
 	p.Enqueue(t)
 
