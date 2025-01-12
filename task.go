@@ -25,7 +25,7 @@ var (
 // Job represents a task to be executed.
 type Job interface {
 	ID() string
-	Exec()
+	Exec(context.Context)
 	Write() error
 	Metadata() Metadata
 }
@@ -53,6 +53,7 @@ type Task[T any] struct {
 	resultChan chan Result[T]
 	next       *Task[T]
 	maxRetries int
+	backoff    []time.Duration
 	db         DB
 	metadata   Metadata
 }
@@ -104,15 +105,26 @@ func (t *Task[T]) markSuccess() {
 	t.metadata.Status = TaskStatusSuccess
 }
 
-func (t *Task[T]) retry(previous Result[T]) Result[T] {
+func (t *Task[T]) retry(ctx context.Context, previous Result[T]) Result[T] {
 	var result Result[T]
 
 	t.markRunning()
-	for _ = range t.maxRetries {
-		result = t.taskFn(previous)
-		if result.Err == nil {
-			t.markSuccess()
-			break
+RETRY:
+	for i := range t.maxRetries {
+		var backoff time.Duration = 0
+		if i > 0 && len(t.backoff) > 0 {
+			backoff = t.backoff[i-1]
+		}
+		select {
+		case <-time.After(backoff):
+			result = t.taskFn(previous)
+			if result.Err == nil {
+				t.markSuccess()
+				break RETRY
+			}
+		case <-ctx.Done():
+			// At least the first attempt has failed so result does exist
+			break RETRY
 		}
 	}
 	return result
@@ -145,11 +157,11 @@ func (t *Task[T]) Write() error {
 }
 
 // Exec executes the task.
-func (t *Task[T]) Exec() {
+func (t *Task[T]) Exec(ctx context.Context) {
 	idx := 1
 	var result Result[T]
 
-	result = t.retry(result)
+	result = t.retry(ctx, result)
 	if result.Err != nil {
 		// it's a pipeline so wrap the error
 		if t.next != nil {
@@ -163,7 +175,7 @@ func (t *Task[T]) Exec() {
 	for t.next != nil {
 		idx++
 
-		result = t.next.retry(result)
+		result = t.next.retry(ctx, result)
 		if result.Err != nil {
 			result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
 			// mark the head of the pipeline

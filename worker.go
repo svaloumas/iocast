@@ -49,7 +49,7 @@ func (p WorkerPool) Start(ctx context.Context) {
 							log.Printf("error writing the result of task %s: %v", j.ID(), err)
 						}
 					}()
-					j.Exec()
+					j.Exec(ctx)
 				case <-ctx.Done():
 					return
 				}

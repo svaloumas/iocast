@@ -50,7 +50,12 @@ func main() {
 	args := &Args{addr: "http://somewhere.net", id: 1}
 	taskFn := iocast.NewTaskFunc(args, DownloadContent)
 
-	t := iocast.TaskBuilder(taskFn).Context(context.Background()).MaxRetries(3).Build()
+	t := iocast.TaskBuilder(taskFn).
+				Context(context.Background()).
+				MaxRetries(3).
+				BackOff([]time.Duration{2*time.Second, 5*time.Second}).
+				Build()
+
 	p.Enqueue(t)
 
 	m := t.Metadata()
@@ -72,6 +77,7 @@ See [examples](_example/) for a detailed illustration of how to run simple tasks
 - [x] Database Interface. Use the built-in in-memory database or use custom drivers for other storage engines by implementing an one-func interface.
 - [x] Task Metadata. Retrieve metadata such as status, creation time, execution time, and elapsed time. Metadata is also stored with the task results.
 - [x] Scheduler: Schedule tasks to run at a specific timestamp.
+- [x] Retries backoff mechanism: Set the duration of the intervals between failed retry attempts.
 - [ ] Scheduler: Add support for periodic tasks.
 
 ## test
