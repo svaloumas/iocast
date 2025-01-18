@@ -52,7 +52,7 @@ func main() {
 
 	t := iocast.TaskBuilder(taskFn).
 		Context(context.Background()).
-		MaxRetries(3).
+		MaxRetries(2).
 		BackOff([]time.Duration{2*time.Second, 5*time.Second}).
 		Build()
 
