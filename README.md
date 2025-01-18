@@ -48,10 +48,9 @@ func main() {
 	defer p.Stop()
 
 	args := &Args{addr: "http://somewhere.net", id: 1}
-	taskFn := iocast.NewTaskFunc(args, DownloadContent)
+	taskFn := iocast.NewTaskFunc(context.Background(), args, DownloadContent)
 
 	t := iocast.TaskBuilder(taskFn).
-		Context(context.Background()).
 		MaxRetries(2).
 		BackOff([]time.Duration{2*time.Second, 5*time.Second}).
 		Build()
