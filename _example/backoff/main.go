@@ -20,7 +20,7 @@ func main() {
 
 	// create a wrapper task
 	t := iocast.TaskBuilder("uuid", taskFn).
-		MaxRetries(3).
+		MaxRetries(2).
 		BackOff([]time.Duration{2 * time.Second, 5 * time.Second}).
 		Build()
 
