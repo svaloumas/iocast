@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	retries = 0
+	totalAttempts = 0
 )
 
 func testTaskFn(_ context.Context, args string) (string, error) {
@@ -15,7 +15,7 @@ func testTaskFn(_ context.Context, args string) (string, error) {
 }
 
 func testFailingTaskFn(_ context.Context, _ string) (string, error) {
-	retries++
+	totalAttempts++
 	return "", errors.New("something went wrong")
 }
 
@@ -61,8 +61,8 @@ func TestTask(t *testing.T) {
 				if result.Err.Error() != expectedMsg {
 					t.Errorf("Exec returned unexpected result error: got %v want %v", result.Err.Error(), expectedMsg)
 				}
-				if retries != 3 {
-					t.Error("unexpected retry attempts made")
+				if totalAttempts != 4 {
+					t.Error("unexpected total attempts made")
 				}
 			}
 		})

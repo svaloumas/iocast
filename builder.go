@@ -41,9 +41,9 @@ func (b *taskBuilder[T]) MaxRetries(maxRetries int) *taskBuilder[T] {
 
 // BackOff passes backoff intervals between retires to the task builder.
 func (b *taskBuilder[T]) BackOff(backoff []time.Duration) *taskBuilder[T] {
-	if len(backoff) > b.maxRetries-1 {
-		b.backoff = backoff[:b.maxRetries-1]
-	} else if len(backoff) == b.maxRetries-1 {
+	if len(backoff) > b.maxRetries {
+		b.backoff = backoff[:b.maxRetries]
+	} else if len(backoff) == b.maxRetries {
 		b.backoff = backoff
 	}
 	return b

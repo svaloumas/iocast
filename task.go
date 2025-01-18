@@ -105,15 +105,22 @@ func (t *Task[T]) markSuccess() {
 	t.metadata.Status = TaskStatusSuccess
 }
 
-func (t *Task[T]) retry(ctx context.Context, previous Result[T]) Result[T] {
+func (t *Task[T]) try(ctx context.Context, previous Result[T]) Result[T] {
 	var result Result[T]
 
 	t.markRunning()
+
+	result = t.taskFn(previous)
+	if result.Err == nil {
+		t.markSuccess()
+		return result
+	}
+
 RETRY:
 	for i := range t.maxRetries {
 		var backoff time.Duration = 0
-		if i > 0 && len(t.backoff) > 0 {
-			backoff = t.backoff[i-1]
+		if len(t.backoff) > 0 {
+			backoff = t.backoff[i]
 		}
 		select {
 		case <-time.After(backoff):
@@ -161,7 +168,7 @@ func (t *Task[T]) Exec(ctx context.Context) {
 	idx := 1
 	var result Result[T]
 
-	result = t.retry(ctx, result)
+	result = t.try(ctx, result)
 	if result.Err != nil {
 		// it's a pipeline so wrap the error
 		if t.next != nil {
@@ -175,7 +182,7 @@ func (t *Task[T]) Exec(ctx context.Context) {
 	for t.next != nil {
 		idx++
 
-		result = t.next.retry(ctx, result)
+		result = t.next.try(ctx, result)
 		if result.Err != nil {
 			result.Err = fmt.Errorf("error in task number %d: %w", idx, result.Err)
 			// mark the head of the pipeline
